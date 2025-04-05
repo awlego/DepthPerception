@@ -33,6 +33,8 @@ var color_reset_time = 0.3  # Time in seconds before color resets (reduced from 
 
 # Flashlight state
 var flashlight_on: bool = false
+var flashlight = null
+var flashlight_auto_activated: bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -64,6 +66,14 @@ func _ready():
 	
 	# Setup depth shader
 	setup_depth_shader()
+	
+	# Initialize flashlight
+	flashlight = load("res://scenes/flashlight.tscn").instantiate()
+	add_child(flashlight)
+	flashlight.initialize(depth_shader)
+	
+	# Connect flashlight signals
+	flashlight.connect("toggled", _on_flashlight_toggled)
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -72,12 +82,6 @@ func setup_depth_shader():
 	depth_shader.shader = load("res://assets/shaders/depth_filter.gdshader")
 	depth_shader.set_shader_parameter("depth", current_depth)
 	
-	# Initialize flashlight parameters
-	depth_shader.set_shader_parameter("light_radius", 0.17)
-	depth_shader.set_shader_parameter("light_intensity", 1.0)
-	depth_shader.set_shader_parameter("light_falloff", 1.5)
-	depth_shader.set_shader_parameter("flashlight_on", false)
-
 	# Create a CanvasLayer to overlay the shader
 	depth_canvas_layer = CanvasLayer.new()
 	depth_canvas_layer.layer = 10  # Put it on top of everything
@@ -235,6 +239,11 @@ func _on_fish_captured(count):
 	# This is just for displaying how many fish are in the viewfinder
 	pass
 
+# Handler for flashlight toggle
+func _on_flashlight_toggled(is_on):
+	flashlight_on = is_on
+	# Add any game-specific logic when flashlight toggles
+
 # Handle input events
 func _input(event):
 	# Play camera sound and take photo when mouse is clicked
@@ -245,40 +254,25 @@ func _input(event):
 	if event is InputEventKey and event.pressed:
 		# Increase/decrease light radius
 		if event.keycode == KEY_UP:
-			adjust_flashlight_radius(0.02)  # Increase radius
+			flashlight.adjust_radius(0.02)
 		elif event.keycode == KEY_DOWN:
-			adjust_flashlight_radius(-0.02)  # Decrease radius
+			flashlight.adjust_radius(-0.02)
 			
 		# Increase/decrease light intensity
 		if event.keycode == KEY_RIGHT:
-			adjust_flashlight_intensity(0.1)  # Increase intensity
+			flashlight.adjust_intensity(0.1)
 		elif event.keycode == KEY_LEFT:
-			adjust_flashlight_intensity(-0.1)  # Decrease intensity
+			flashlight.adjust_intensity(-0.1)
 
-				# Adjust light falloff (edge softness)
+		# Adjust light falloff (edge softness)
 		if event.keycode == KEY_BRACKETRIGHT:
-			adjust_flashlight_falloff(0.1)  # Harder edge
+			flashlight.adjust_falloff(0.1)
 		elif event.keycode == KEY_BRACKETLEFT:
-			adjust_flashlight_falloff(-0.1)  # Softer edge
+			flashlight.adjust_falloff(-0.1)
 
 	# Toggle flashlight on/off
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F:
-		toggle_flashlight()
-
-# Toggle the flashlight on/off
-func toggle_flashlight(force_state = null):
-	if force_state != null:
-		flashlight_on = force_state
-	else:
-		flashlight_on = !flashlight_on
-	
-	if depth_shader:
-		if flashlight_on:
-			depth_shader.set_shader_parameter("flashlight_on", true)
-			print("Flashlight ON")
-		else:
-			depth_shader.set_shader_parameter("flashlight_on", false)
-			print("Flashlight OFF")
+		flashlight.toggle()
 
 # Take a photo with the camera
 func take_photo():
@@ -357,43 +351,15 @@ func create_flash_effect():
 	tween.tween_property(flash, "color:a", 0.0, 0.2)  # Fade out over 0.2 seconds
 	tween.tween_callback(flash.queue_free)  # Remove flash when done
 
-# Adjust the flashlight radius with limits
-func adjust_flashlight_radius(amount):
-	if depth_shader:
-		var current_radius = depth_shader.get_shader_parameter("light_radius")
-		var new_radius = clamp(current_radius + amount, 0.1, 0.5)
-		depth_shader.set_shader_parameter("light_radius", new_radius)
-		print("Flashlight radius: ", new_radius)
-
-# Adjust the flashlight intensity with limits
-func adjust_flashlight_intensity(amount):
-	if depth_shader:
-		var current_intensity = depth_shader.get_shader_parameter("light_intensity")
-		var new_intensity = clamp(current_intensity + amount, 0.0, 1.0)
-		depth_shader.set_shader_parameter("light_intensity", new_intensity)
-		print("Flashlight intensity: ", new_intensity)
-
-func adjust_flashlight_falloff(amount):
-	if depth_shader:
-		var current_falloff = depth_shader.get_shader_parameter("light_falloff")
-		var new_falloff = clamp(current_falloff + amount, 1.0, 5.0)
-		depth_shader.set_shader_parameter("light_falloff", new_falloff)
-		print("Flashlight falloff: ", new_falloff)
-
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	# Update camera target position to follow mouse
 	if camera_target:
 		camera_target.position = get_viewport().get_mouse_position()
 		
-		# Update light position in shader (convert from screen coordinates to UV coordinates 0-1)
-		if depth_shader:
-			var viewport_size = get_viewport_rect().size
-			var light_pos = Vector2(
-				camera_target.position.x / viewport_size.x,
-				camera_target.position.y / viewport_size.y
-			)
-			depth_shader.set_shader_parameter("light_position", light_pos)
+		# Update flashlight position instead of directly updating shader
+		if flashlight:
+			flashlight.update_position(camera_target.position, get_viewport_rect().size)
 	
 	# Increase depth over time
 	if current_depth < max_depth:
@@ -405,8 +371,9 @@ func _process(delta):
 			depth_shader.set_shader_parameter("depth", current_depth)
 		
 	# Auto-activate flashlight at 25m depth if it's off
-	if !flashlight_on and current_depth >= 25.0:
-		toggle_flashlight(true)  # Force ON
+	if flashlight and current_depth > 25.0 and not flashlight_auto_activated and not flashlight.flashlight_on:
+		flashlight.toggle(true)  # Force ON
+		flashlight_auto_activated = true  # Set the flag so this only happens once
 		print("Depth reached 25m - flashlight automatically activated")
 
 	# You could add gameplay effects based on depth here

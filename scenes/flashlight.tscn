@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dy4onyetki5tg"]
+
+[ext_resource type="Script" path="res://scenes/flashlight.gd" id="1_xv72a"]
+
+[node name="flashlight" type="Node"]
+script = ExtResource("1_xv72a")

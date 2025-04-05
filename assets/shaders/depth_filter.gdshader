@@ -48,10 +48,6 @@ void fragment() {
         // Spotlight center = true colors
         // Outside spotlight = depth-filtered colors
         final_color = mix(depth_filtered_color, true_color, spotlight * min(1.0, light_intensity));
-        
-        // Add slight ambient light outside spotlight area
-        float ambient_light = max(0.5, 1.0 - (depth / 100.0));
-        final_color.rgb = mix(final_color.rgb, depth_filtered_color.rgb * ambient_light, 1.0 - spotlight);
     }
     
     COLOR = final_color;
