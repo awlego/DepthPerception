@@ -15,7 +15,7 @@ var total_targets = 0
 
 # Depth tracking
 var current_depth: float = 0.0
-var depth_increase_rate: float = 5.0  # Units per second
+var depth_increase_rate: float = 1.0  # Units per second
 var max_depth: float = 1000.0  # Maximum depth
 
 # Shader
@@ -30,6 +30,9 @@ var camera_sound: AudioStreamPlayer
 var regular_camera_color = Color(1, 0, 0, 1)  # Red
 var success_camera_color = Color(0, 1, 0, 1)  # Green
 var color_reset_time = 0.3  # Time in seconds before color resets (reduced from 0.5)
+
+# Flashlight state
+var flashlight_on: bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -70,10 +73,11 @@ func setup_depth_shader():
 	depth_shader.set_shader_parameter("depth", current_depth)
 	
 	# Initialize flashlight parameters
-	depth_shader.set_shader_parameter("light_radius", 0.25)
-	depth_shader.set_shader_parameter("light_intensity", 1.5)
-	depth_shader.set_shader_parameter("light_falloff", 3.0)
-	
+	depth_shader.set_shader_parameter("light_radius", 0.17)
+	depth_shader.set_shader_parameter("light_intensity", 1.0)
+	depth_shader.set_shader_parameter("light_falloff", 1.5)
+	depth_shader.set_shader_parameter("flashlight_on", false)
+
 	# Create a CanvasLayer to overlay the shader
 	depth_canvas_layer = CanvasLayer.new()
 	depth_canvas_layer.layer = 10  # Put it on top of everything
@@ -251,6 +255,31 @@ func _input(event):
 		elif event.keycode == KEY_LEFT:
 			adjust_flashlight_intensity(-0.1)  # Decrease intensity
 
+				# Adjust light falloff (edge softness)
+		if event.keycode == KEY_BRACKETRIGHT:
+			adjust_flashlight_falloff(0.1)  # Harder edge
+		elif event.keycode == KEY_BRACKETLEFT:
+			adjust_flashlight_falloff(-0.1)  # Softer edge
+
+	# Toggle flashlight on/off
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F:
+		toggle_flashlight()
+
+# Toggle the flashlight on/off
+func toggle_flashlight(force_state = null):
+	if force_state != null:
+		flashlight_on = force_state
+	else:
+		flashlight_on = !flashlight_on
+	
+	if depth_shader:
+		if flashlight_on:
+			depth_shader.set_shader_parameter("flashlight_on", true)
+			print("Flashlight ON")
+		else:
+			depth_shader.set_shader_parameter("flashlight_on", false)
+			print("Flashlight OFF")
+
 # Take a photo with the camera
 func take_photo():
 	if not camera_target:
@@ -332,7 +361,7 @@ func create_flash_effect():
 func adjust_flashlight_radius(amount):
 	if depth_shader:
 		var current_radius = depth_shader.get_shader_parameter("light_radius")
-		var new_radius = clamp(current_radius + amount, 0.1, 0.7)
+		var new_radius = clamp(current_radius + amount, 0.1, 0.5)
 		depth_shader.set_shader_parameter("light_radius", new_radius)
 		print("Flashlight radius: ", new_radius)
 
@@ -340,9 +369,16 @@ func adjust_flashlight_radius(amount):
 func adjust_flashlight_intensity(amount):
 	if depth_shader:
 		var current_intensity = depth_shader.get_shader_parameter("light_intensity")
-		var new_intensity = clamp(current_intensity + amount, 0.5, 3.0)
+		var new_intensity = clamp(current_intensity + amount, 0.0, 1.0)
 		depth_shader.set_shader_parameter("light_intensity", new_intensity)
 		print("Flashlight intensity: ", new_intensity)
+
+func adjust_flashlight_falloff(amount):
+	if depth_shader:
+		var current_falloff = depth_shader.get_shader_parameter("light_falloff")
+		var new_falloff = clamp(current_falloff + amount, 1.0, 5.0)
+		depth_shader.set_shader_parameter("light_falloff", new_falloff)
+		print("Flashlight falloff: ", new_falloff)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -368,5 +404,10 @@ func _process(delta):
 		if depth_shader:
 			depth_shader.set_shader_parameter("depth", current_depth)
 		
+	# Auto-activate flashlight at 25m depth if it's off
+	if !flashlight_on and current_depth >= 25.0:
+		toggle_flashlight(true)  # Force ON
+		print("Depth reached 25m - flashlight automatically activated")
+
 	# You could add gameplay effects based on depth here
 	# For example, making fish move faster or changing the background
