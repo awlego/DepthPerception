@@ -1,0 +1,70 @@
+# Godot-specific ignores
+.godot/
+*.translation
+export_presets.cfg
+.import/
+export/
+logs/
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# System/tool-specific ignores
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.directory
+*~
+*.blend1
+.vscode/
+.idea/
+*.tmp
+*.temp
+
+# Build artifacts
+*.o
+*.os
+*.obj
+*.bc
+*.pyc
+*.dblite
+*.pdb
+*.lib
+*.exp
+
+# Android export ignores
+android/build/*
+android/libs/*
+android/.gradle/*
+android/.build_version
+android/local.properties
+android/.gradletasknamecache
+
+# iOS export ignores
+ios/engine.xcodeproj/
+ios/godot_ios.xcodeproj/
+ios/godot_ios/
+ios/Index/
+
+# Windows export ignores
+*.pdb
+*.exp
+*.lib
+
+# Linux export ignores
+*.a
+*.os
+*.so
+
+# macOS export ignores
+*.dSYM/
+*.dSYM.zip
+*.app/
