@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b185eqjqlc5h7"]
+
+[ext_resource type="Script" uid="uid://ylxqrlxr1l5o" path="res://scenes/coral_wall.gd" id="1_jvnsv"]
+
+[node name="coral-wall" type="Node2D"]
+script = ExtResource("1_jvnsv")

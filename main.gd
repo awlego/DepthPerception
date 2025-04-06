@@ -38,10 +38,8 @@ var flashlight_on: bool = false
 var flashlight = null
 var flashlight_auto_activated: bool = false
 
-# Add these variables at the top of your script with other declarations
-var parallax_bg: ParallaxBackground
-var parallax_layers = []
-var parallax_sprites = []
+# Coral wall
+var coral_wall = null
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -50,7 +48,7 @@ func _ready():
 	
 	# Setup audio
 	setup_camera_sound()
-	setup_background_music()
+	# setup_background_music()
 	
 	# Dynamically load all fish from the fish directory
 	fish_types = load_fish_list()
@@ -81,6 +79,11 @@ func _ready():
 	
 	# Setup underwater parallax
 	# setup_underwater_parallax()
+	
+	# Initialize coral wall
+	var coral_wall_scene = load("res://scenes/coral_wall.tscn")
+	coral_wall = coral_wall_scene.instantiate()
+	add_child(coral_wall)
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -390,6 +393,10 @@ func _process(delta):
 		if depth_shader:
 			depth_shader.set_shader_parameter("depth", current_depth)
 		
+		# Update coral wall with new depth
+		if coral_wall:
+			coral_wall.update_depth(current_depth)
+	
 	# Auto-activate flashlight at 25m depth if it's off
 	if flashlight and current_depth > 25.0 and not flashlight_auto_activated and not flashlight.flashlight_on:
 		flashlight.toggle(true)  # Force ON
@@ -398,36 +405,6 @@ func _process(delta):
 
 	# You could add gameplay effects based on depth here
 	# For example, making fish move faster or changing the background
-
-# Create a parallax background for underwater scene
-func setup_underwater_parallax():
-	# Create the main parallax background
-	var parallax_bg = ParallaxBackground.new()
-	add_child(parallax_bg)
-	
-	# Far background (distant water/coral)
-	var far_layer = ParallaxLayer.new()
-	far_layer.motion_scale = Vector2(0.1, 0.1)  # Moves very slowly
-	var far_sprite = Sprite2D.new()
-	far_sprite.texture = load("res://assets/background-objs/big-rock1.png")
-	far_layer.add_child(far_sprite)
-	parallax_bg.add_child(far_layer)
-	
-	# Mid-ground layer (mid-distance plants/rocks)
-	var mid_layer = ParallaxLayer.new()
-	mid_layer.motion_scale = Vector2(0.4, 0.4)  # Moves at medium speed
-	var mid_sprite = Sprite2D.new()
-	mid_sprite.texture = load("res://assets/background-objs/coral2.png")
-	mid_layer.add_child(mid_sprite)
-	parallax_bg.add_child(mid_layer)
-	
-	# Foreground particles (bubbles/plankton)
-	var fore_layer = ParallaxLayer.new()
-	fore_layer.motion_scale = Vector2(0.8, 0.8)  # Moves quickly
-	var fore_sprite = Sprite2D.new()
-	fore_sprite.texture = load("res://assets/background-objs/coral1.png")
-	fore_layer.add_child(fore_sprite)
-	parallax_bg.add_child(fore_layer)
 
 # Add this new function to load all fish PNGs
 func load_fish_list():
