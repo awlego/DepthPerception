@@ -1,21 +1,16 @@
 extends Node2D
 
-# Fish variables
-var fish_count = 4
-var fish_types = []  # Holds the fish texture paths
-var fish_nodes = {}  # Maps texture paths to fish node instances
-
 # UI Variables
 var score_label: Label
 var depth_label: Label
 var camera_target = null
 var target_queue = null
-var captured_count = 0
 var total_targets = 0
+var captured_count = 0
 var fps_label: Label
 
 # Depth tracking
-var current_depth: float = 0.0
+var current_depth = 0.0  # Single source of truth for depth
 var depth_increase_rate: float = 1.0  # Units per second
 var max_depth: float = 1000.0  # Maximum depth
 
@@ -42,6 +37,9 @@ var flashlight_auto_activated: bool = false
 # Coral wall
 var coral_wall = null
 
+# Fish manager
+var fish_manager
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# Hide the mouse cursor
@@ -51,18 +49,8 @@ func _ready():
 	setup_camera_sound()
 	# setup_background_music()
 	
-	# Dynamically load all fish from the fish directory
-	fish_types = load_fish_list()
-	print("Loaded " + str(fish_types.size()) + " fish types")
-	
-	# Create fish
-	spawn_fish()
-	
 	# Create camera target/viewfinder
 	create_camera_target()
-	
-	# Create the target fish queue
-	create_target_queue()
 	
 	# Create UI
 	create_ui()
@@ -77,6 +65,14 @@ func _ready():
 	
 	# Now initialize flashlight AFTER both the depth filter and coral wall exist
 	initialize_flashlight()
+	
+	# Initialize fish manager
+	fish_manager = FishManager.new()
+	add_child(fish_manager)
+
+	# Create the target fish queue
+	create_target_queue()
+
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -176,38 +172,72 @@ func create_target_queue():
 	ui_layer.add_child(target_queue)  # Add to UI layer instead of root
 	target_queue.connect("target_completed", _on_target_completed)
 	
-	# Generate random target sequence using the available fish types
-	var target_sequence = []
-	var available_types = fish_types.duplicate()
-	
-	# Create a random sequence of 6 target fish
-	for i in range(6):
-		var random_index = randi() % available_types.size()
-		target_sequence.append(available_types[random_index])
-	
-	# Set the targets in the queue
-	target_queue.set_target_fish(target_sequence)
-	total_targets = target_sequence.size()
+	# Generate target sequence using fish from the fish manager
+	if fish_manager:
+		var target_sequence = []
+		var available_fish = []
+		
+		# Define the depth range for available targets (current depth ±30m)
+		var min_depth = max(0, current_depth - 30)
+		var max_depth = current_depth + 30
+		
+		# Get all currently visible fish (on screen) and fish in the valid depth range
+		var visible_fish_set = {}  # Using a dictionary as a set to avoid duplicates
+		
+		# First, check active fish that are already on screen
+		for fish in fish_manager.active_fish:
+			if is_instance_valid(fish) and fish.visible:
+				visible_fish_set[fish.texture_path] = true
+		
+		# Then add fish from the database that are in our depth range
+		for fish_data in fish_manager.fish_database:
+			# Check if this fish type can appear in our current depth range
+			var fish_min_depth = fish_data.depth_range.x
+			var fish_max_depth = fish_data.depth_range.y
+			
+			# If there's overlap between our depth range and the fish's range
+			if (fish_min_depth <= max_depth and fish_max_depth >= min_depth):
+				visible_fish_set[fish_data.texture_path] = true
+		
+		# Convert set to array
+		for fish_path in visible_fish_set:
+			available_fish.append(fish_path)
+		
+		# If we have fish available, create a sequence
+		if available_fish.size() > 0:
+			# Create a random sequence of up to 6 target fish
+			var num_targets = min(6, available_fish.size())
+			
+			# Shuffle the available fish
+			available_fish.shuffle()
+			
+			# Take the first 6 (or fewer)
+			for i in range(num_targets):
+				target_sequence.append(available_fish[i])
+			
+			# Set the targets in the queue
+			target_queue.set_target_fish(target_sequence)
+			total_targets = target_sequence.size()
+			
+			# Update the score label
+			if score_label:
+				score_label.text = "Fish photographed: 0/" + str(total_targets)
+		else:
+			# No fish available, show an error or default message
+			print("Warning: No fish available in current depth range")
+			if score_label:
+				score_label.text = "No target fish at current depth"
 
 # Spawn fish around the scene
 func spawn_fish():
-	var screen_size = get_viewport_rect().size
+	# This function is no longer needed as the fish_manager handles fish spawning
+	# If you want to keep it for manual spawning, here's an updated version:
 	
-	for i in range(fish_types.size()):
-		var fish_scene = load("res://scenes/fish.tscn")
-		var fish = fish_scene.instantiate()
-		fish.texture_path = fish_types[i]
-		
-		# Random starting position
-		fish.position = Vector2(
-			randf_range(50, screen_size.x - 50),
-			randf_range(50, screen_size.y - 50)
-		)
-		
-		add_child(fish)
-		
-		# Store reference to the fish
-		fish_nodes[fish_types[i]] = fish
+	if fish_manager and fish_manager.fish_database.size() > 0:
+		# Let fish manager handle normal spawning
+		fish_manager.spawn_fish()
+	else:
+		print("Warning: Cannot spawn fish, fish manager not initialized or has empty database")
 
 # Create UI elements
 func create_ui():
@@ -308,11 +338,12 @@ func take_photo():
 	# Check if any fish are FULLY in the viewfinder for successful capture
 	var fully_contained_fish = []
 	
-	# Get all fish fully in viewfinder
-	for texture_path in fish_nodes:
-		var fish = fish_nodes[texture_path]
+	# Get all fish in the scene and check if they're in viewfinder
+	var fish_in_scene = get_tree().get_nodes_in_group("fish")
+	for fish in fish_in_scene:
 		if camera_target.is_fish_fully_in_viewfinder(fish):
-			fully_contained_fish.append(texture_path)
+			if fish.texture_path:
+				fully_contained_fish.append(fish.texture_path)
 	
 	# Get the current target fish
 	var current_target = null
@@ -407,41 +438,80 @@ func _process(delta):
 	if fps_label:
 		fps_label.text = "FPS: " + str(Engine.get_frames_per_second())
 
+	# Update coral wall depth
+	if has_node("CoralWall"):
+		$CoralWall.update_depth(current_depth)
+	
+	# Pass the single depth value to all systems that need it
+	if fish_manager:
+		fish_manager.update_depth(current_depth)
+
 	# You could add gameplay effects based on depth here
 	# For example, making fish move faster or changing the background
 
-# Add this new function to load all fish PNGs
-func load_fish_list():
-	var fish_list = [
-		"res://assets/fish/fish1.png",
-		"res://assets/fish/fish2.png",
-		"res://assets/fish/fish3.png",
-		"res://assets/fish/fish4.png",
-		"res://assets/fish/fish5.png",
-		"res://assets/fish/fish6.png",
-		"res://assets/fish/fish7.png",
-		"res://assets/fish/fish8.png",
-		"res://assets/fish/fish9.png",
-		"res://assets/fish/fish10.png",
-		"res://assets/fish/fish11.png",
-		"res://assets/fish/fish12.png",
-		"res://assets/fish/fish13.png",
-		"res://assets/fish/fish14.png",
-		"res://assets/fish/fish15.png",
-		"res://assets/fish/jellyfish1.png",
-		"res://assets/fish/angler2.png",
-		"res://assets/fish/anglerfish.png",
-		"res://assets/fish/eel.png",
-		"res://assets/fish/spottedeel.png",
-		"res://assets/fish/ray1.png",
-		"res://assets/fish/seahorse.png",
-		"res://assets/fish/turtle.png",
-		"res://assets/fish/whale.png",
-		"res://assets/fish/whale2.png",
-		"res://assets/fish/hammerhead.png",
-		"res://assets/fish/angler3.png",
-	]
-	return fish_list
+	# Update depth
+	if current_depth < max_depth:
+		var previous_depth = current_depth
+		current_depth += depth_increase_rate * delta
+		update_depth_display()
+		
+		# Check if we've crossed a 30m boundary
+		if int(previous_depth / 30) != int(current_depth / 30):
+			refresh_target_queue()
+
+# Refresh the target queue to match current depth
+# Call this periodically or when significant depth changes occur
+func refresh_target_queue():
+	# Don't refresh if all targets have been completed
+	if captured_count >= total_targets and total_targets > 0:
+		return
+	
+	# Only refresh every 30m of depth change
+	var depth_interval = 30
+	if int(current_depth) % depth_interval != 0:
+		return
+		
+	print("Refreshing target queue at depth: " + str(int(current_depth)) + "m")
+	
+	# Reset the target queue
+	if target_queue:
+		target_queue.clear_queue()
+		captured_count = 0
+		
+		create_target_queue()  # This will create new targets based on current depth
+
+# # Add this new function to load all fish PNGs
+# func load_fish_list():
+# 	var fish_list = [
+# 		"res://assets/fish/fish1.png",
+# 		"res://assets/fish/fish2.png",
+# 		"res://assets/fish/fish3.png",
+# 		"res://assets/fish/fish4.png",
+# 		"res://assets/fish/fish5.png",
+# 		"res://assets/fish/fish6.png",
+# 		"res://assets/fish/fish7.png",
+# 		"res://assets/fish/fish8.png",
+# 		"res://assets/fish/fish9.png",
+# 		"res://assets/fish/fish10.png",
+# 		"res://assets/fish/fish11.png",
+# 		"res://assets/fish/fish12.png",
+# 		"res://assets/fish/fish13.png",
+# 		"res://assets/fish/fish14.png",
+# 		"res://assets/fish/fish15.png",
+# 		"res://assets/fish/jellyfish1.png",
+# 		"res://assets/fish/angler2.png",
+# 		"res://assets/fish/anglerfish.png",
+# 		"res://assets/fish/eel.png",
+# 		"res://assets/fish/spottedeel.png",
+# 		"res://assets/fish/ray1.png",
+# 		"res://assets/fish/seahorse.png",
+# 		"res://assets/fish/turtle.png",
+# 		"res://assets/fish/whale.png",
+# 		"res://assets/fish/whale2.png",
+# 		"res://assets/fish/hammerhead.png",
+# 		"res://assets/fish/angler3.png",
+# 	]
+# 	return fish_list
 
 # New method to initialize flashlight
 func initialize_flashlight():
