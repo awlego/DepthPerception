@@ -8,6 +8,8 @@ var target_queue = null
 var total_targets = 0
 var captured_count = 0
 var fps_label: Label
+var start_menu = null
+var game_active = false
 
 # Depth tracking
 var current_depth = 0.0  # Single source of truth for depth
@@ -43,17 +45,22 @@ var fish_manager
 # God rays
 var god_rays = null
 
+# New fish announcement
+var new_fish_announcement = null
+var captured_species = []  # Track which species have been captured
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	# Hide the mouse cursor
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	# Create and show the start menu first
+	create_start_menu()
 	
-	# Setup audio
-	setup_camera_sound()
-	# setup_background_music()
+	# Set game_active to false initially
+	game_active = false
 	
-	# Create camera target/viewfinder
+	# Create camera target/viewfinder but keep it hidden initially
 	create_camera_target()
+	if camera_target:
+		camera_target.visible = false
 	
 	# Create UI
 	create_ui()
@@ -73,11 +80,16 @@ func _ready():
 	fish_manager = FishManager.new()
 	add_child(fish_manager)
 
-	# Create the target fish queue
+	# Create the target fish queue but keep it hidden
 	create_target_queue()
+	if target_queue:
+		target_queue.visible = false
 
 	# Initialize the god rays
 	initialize_god_rays()
+
+	# Initialize new fish announcement
+	initialize_fish_announcement()
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -177,61 +189,47 @@ func create_target_queue():
 	ui_layer.add_child(target_queue)  # Add to UI layer instead of root
 	target_queue.connect("target_completed", _on_target_completed)
 	
-	# Generate target sequence using fish from the fish manager
-	if fish_manager:
-		var target_sequence = []
-		var available_fish = []
+	# Generate target sequence using ONLY spawned fish
+	var target_sequence = []
+	var available_fish = []
+	
+	# Get all active fish in the scene - only consider actually spawned fish
+	var fish_in_scene = get_tree().get_nodes_in_group("fish")
+	
+	# Create a set of unique fish textures from spawned fish
+	var unique_fish_textures = {}
+	for fish in fish_in_scene:
+		if fish.visible and fish.is_active and fish.texture_path:
+			unique_fish_textures[fish.texture_path] = true
+	
+	# Convert dictionary keys to array
+	for texture_path in unique_fish_textures:
+		available_fish.append(texture_path)
+	
+	# If we have fish available, create a sequence
+	if available_fish.size() > 0:
+		# Create a random sequence of up to 6 target fish
+		var num_targets = min(6, available_fish.size())
 		
-		# Define the depth range for available targets (current depth ±30m)
-		var min_depth = max(0, current_depth - 30)
-		var max_depth = current_depth + 30
+		# Shuffle the available fish
+		available_fish.shuffle()
 		
-		# Get all currently visible fish (on screen) and fish in the valid depth range
-		var visible_fish_set = {}  # Using a dictionary as a set to avoid duplicates
+		# Take the first 6 (or fewer)
+		for i in range(num_targets):
+			target_sequence.append(available_fish[i])
 		
-		# First, check active fish that are already on screen
-		for fish in fish_manager.active_fish:
-			if is_instance_valid(fish) and fish.visible:
-				visible_fish_set[fish.texture_path] = true
+		# Set the targets in the queue
+		target_queue.set_target_fish(target_sequence)
+		total_targets = target_sequence.size()
 		
-		# Then add fish from the database that are in our depth range
-		for fish_data in fish_manager.fish_database:
-			# Check if this fish type can appear in our current depth range
-			var fish_min_depth = fish_data.depth_range.x
-			var fish_max_depth = fish_data.depth_range.y
-			
-			# If there's overlap between our depth range and the fish's range
-			if (fish_min_depth <= max_depth and fish_max_depth >= min_depth):
-				visible_fish_set[fish_data.texture_path] = true
-		
-		# Convert set to array
-		for fish_path in visible_fish_set:
-			available_fish.append(fish_path)
-		
-		# If we have fish available, create a sequence
-		if available_fish.size() > 0:
-			# Create a random sequence of up to 6 target fish
-			var num_targets = min(6, available_fish.size())
-			
-			# Shuffle the available fish
-			available_fish.shuffle()
-			
-			# Take the first 6 (or fewer)
-			for i in range(num_targets):
-				target_sequence.append(available_fish[i])
-			
-			# Set the targets in the queue
-			target_queue.set_target_fish(target_sequence)
-			total_targets = target_sequence.size()
-			
-			# Update the score label
-			if score_label:
-				score_label.text = "Fish photographed: 0/" + str(total_targets)
-		else:
-			# No fish available, show an error or default message
-			print("Warning: No fish available in current depth range")
-			if score_label:
-				score_label.text = "No target fish at current depth"
+		# Update the score label
+		if score_label:
+			score_label.text = "Fish photographed: 0/" + str(total_targets)
+	else:
+		# No fish available, show an error or default message
+		print("Warning: No fish available in current depth range")
+		if score_label:
+			score_label.text = "No target fish at current depth"
 
 # Spawn fish around the scene
 func spawn_fish():
@@ -368,6 +366,15 @@ func take_photo():
 		
 		# Complete the target
 		target_queue.complete_current_target()
+		
+		# Get the fish that matches the current target
+		for fish in fish_in_scene:
+			if fish.texture_path == current_target:
+				# Check if this is a new species and show announcement if it is
+				if not fish.texture_path in captured_species:
+					captured_species.append(fish.texture_path)
+					show_new_species_announcement(fish.fish_name)
+				break
 	else:
 		# Either no fish or wrong fish - show fail color (red)
 		camera_target.rect_color = fail_camera_color
@@ -417,6 +424,10 @@ func create_flash_effect():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	# Skip updates if game is not active
+	if not game_active:
+		return
+		
 	# Update camera target position to follow mouse
 	if camera_target:
 		camera_target.position = get_viewport().get_mouse_position()
@@ -494,7 +505,6 @@ func refresh_target_queue():
 		
 		create_target_queue()  # This will create new targets based on current depth
 
-
 # New method to initialize flashlight
 func initialize_flashlight():
 	# Initialize flashlight
@@ -548,3 +558,55 @@ func initialize_god_rays():
 	rays_layer.layer = 5  # Adjust as needed
 	add_child(rays_layer)
 	rays_layer.add_child(god_rays)
+
+# Create the start menu
+func create_start_menu():
+	var start_menu_scene = load("res://scenes/StartMenu.tscn")
+	start_menu = start_menu_scene.instantiate()
+	add_child(start_menu)
+	
+	# Connect the start signal
+	start_menu.connect("start_game", _on_start_game)
+
+# Called when the start button is pressed
+func _on_start_game():
+		# Hide the mouse cursor
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	
+	setup_camera_sound()
+	setup_background_music()
+
+	# Set game as active
+	game_active = true
+	
+	# Show the camera target when game starts
+	if camera_target:
+		camera_target.visible = true
+	
+	# Show the target fish queue when game starts
+	if target_queue:
+		target_queue.visible = true
+	
+	# Hide mouse cursor when game starts
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+
+# Add this function to initialize the fish announcement
+func initialize_fish_announcement():
+	var announcement_scene = load("res://scenes/new_fish_announcement.tscn")
+	new_fish_announcement = announcement_scene.instantiate()
+	
+	# Create a CanvasLayer to hold the announcement (higher than other UI)
+	var announcement_layer = CanvasLayer.new()
+	announcement_layer.layer = 12  # Higher than other UI layers
+	add_child(announcement_layer)
+	
+	# Add the announcement to the canvas layer
+	announcement_layer.add_child(new_fish_announcement)
+	
+	# Initially hide the announcement (it will be positioned off-screen)
+	# The actual positioning will be handled by the show_announcement function
+
+# Add this function to show the new species announcement
+func show_new_species_announcement(species_name):
+	if new_fish_announcement:
+		new_fish_announcement.show_announcement(species_name)

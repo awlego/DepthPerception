@@ -1,0 +1,51 @@
+[gd_scene load_steps=5 format=3 uid="uid://b32ndsfgw808"]
+
+[ext_resource type="Script" uid="uid://ch1iyh2d5oigy" path="res://scenes/new_fish_announcement.gd" id="1_g5lgi"]
+[ext_resource type="Texture2D" uid="uid://imuva0l0ioty" path="res://assets/ui/Free Paper UI System/1 Sprites/Content/10 Banners & Headers/Cutout/6.png" id="2_ruoge"]
+[ext_resource type="Texture2D" uid="uid://bw4una772gew" path="res://assets/ui/Free Paper UI System/1 Sprites/Content/10 Banners & Headers/Cutout/7.png" id="3_loqfw"]
+[ext_resource type="Texture2D" uid="uid://sdnv1op3g1mr" path="res://assets/ui/Free Paper UI System/1 Sprites/Content/10 Banners & Headers/Cutout/8.png" id="4_8u0di"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_g5lgi")
+
+[node name="TextureRect2" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 112.0
+offset_bottom = 80.0
+texture = ExtResource("2_ruoge")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 112.0
+offset_right = 224.0
+offset_bottom = 80.0
+texture = ExtResource("3_loqfw")
+
+[node name="TextureRect5" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 224.0
+offset_right = 336.0
+offset_bottom = 80.0
+texture = ExtResource("3_loqfw")
+
+[node name="TextureRect3" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 336.0
+offset_right = 448.0
+offset_bottom = 80.0
+texture = ExtResource("4_8u0di")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 25.0
+offset_right = 260.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "New Species Identified!"

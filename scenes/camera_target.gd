@@ -144,6 +144,13 @@ func is_fish_fully_in_viewfinder(fish):
 
 # Check if a fish is a valid target (either fully contained or covers most of viewfinder)
 func is_valid_fish_capture(fish):
+	# Special handling for fish16.png
+	if fish.texture_path and "fish16.png" in fish.texture_path:
+		# Special case for fish16 - use a much lower threshold (10%)
+		var coverage = calculate_viewfinder_coverage(fish)
+		return coverage >= 10.0  # Only need 10% coverage
+	
+	# Standard handling for all other fish
 	# First check if fish is fully in viewfinder
 	if is_fish_fully_in_viewfinder(fish):
 		return true

@@ -34,18 +34,13 @@ func _ready():
 	
 	# Ensure at least one of each fish species in the current zone is spawned
 	ensure_all_zone_species_spawned()
-	
-	# Find player node (assuming it exists in the scene)
-	player_node = get_node_or_null("/root/Main/Player")
-	if not player_node:
-		print("Warning: Player node not found. Using default position.")
 
 # Helper function to add fish entries with consistent parameter order
-func add_fish_entry(entries_array, texture, name, scale, depth_range, sound, rarity, dangerous, swim_style, school_size, z_index_range=Vector2(-20, 10), target_count=5):
+func add_fish_entry(entries_array, texture, fish_name, fish_scale, depth_range, sound, rarity, dangerous, swim_style, school_size, z_index_range=Vector2(-20, 10), target_count=5):
 	entries_array.append({
 		"texture_path": texture,
-		"fish_name": name,
-		"scale_factor": scale,
+		"fish_name": fish_name,
+		"scale_factor": fish_scale,
 		"depth_range": depth_range,
 		"sound_path": sound,
 		"rarity": rarity,
@@ -68,7 +63,7 @@ func load_fish_database():
 	add_fish_entry(fish_entries, "res://assets/fish/fish4.png", "Moorish Idol", 0.14, Vector2(10, 100), "res://assets/sounds/fish_bubble2.mp3", 0.8, false, "normal", 2, Vector2(-15, 15), 3)
 	add_fish_entry(fish_entries, "res://assets/fish/fish5.png", "Butterflyfish", 0.13, Vector2(0, 90), "res://assets/sounds/fish_bubble1.mp3", 0.9, false, "normal", 3, Vector2(-15, 15), 4)
 	add_fish_entry(fish_entries, "res://assets/fish/fish16.png", "TrumpetFish", 0.12, Vector2(0, 100), "res://assets/sounds/fish_bubble1.mp3", 0.8, false, "normal", 2, Vector2(-15, 15), 2)
-	add_fish_entry(fish_entries, "res://assets/fish/shark15foot.png", "Nurse Shark", 1.0, Vector2(0, 80), "res://assets/sounds/shark1.mp3", 0.7, false, "normal", 3, Vector2(-15, 15), 1)
+	add_fish_entry(fish_entries, "res://assets/fish/shark15foot.png", "Nurse Shark", 1.0, Vector2(30, 80), "res://assets/sounds/shark1.mp3", 0.7, false, "normal", 3, Vector2(-15, 15), 1)
 
 	# Mid-water fish
 	add_fish_entry(fish_entries, "res://assets/fish/fish6.png", "Parrotfish", 0.20, Vector2(50, 150), "res://assets/sounds/fish_medium1.mp3", 0.8, false, "normal", 1, Vector2(0, 10), 1)
@@ -234,7 +229,7 @@ func _on_fish_ready_for_removal(fish):
 		fish.queue_free()
 
 # Clean up off-screen fish to manage performance
-func _process(delta):
+func _process(_delta):
 	var screen_rect = get_viewport_rect()
 	screen_rect = screen_rect.grow(300)  # Allow margin outside screen
 	
