@@ -24,7 +24,7 @@ var shader_rect: ColorRect
 # Sound variables
 var camera_sound: AudioStreamPlayer
 var background_music: AudioStreamPlayer
-
+var background_sea_sounds1: AudioStreamPlayer
 # Camera color settings
 var default_camera_color = Color(1, 1, 1, 1)  # White (default)
 var success_camera_color = Color(0, 1, 0, 1)  # Green (successful capture)
@@ -139,16 +139,27 @@ func setup_camera_sound():
 	camera_sound = AudioStreamPlayer.new()
 	camera_sound.stream = load("res://assets/sounds/camera-shutter-1.mp3")
 	camera_sound.volume_db = 0  # Normal volume, adjust as needed
+	
+	# For one-shot sounds like camera shutter, we don't need looping
+	# camera_sound.stream.loop = false  # MP3 files don't have loop property in Godot 4
+	
 	add_child(camera_sound)
 
-# Setup the background music
+# Setup the background music with looping
 func setup_background_music():
-	background_music = AudioStreamPlayer.new()
-	background_music.stream = load("res://assets/music/Silent Reverie2.mp3")
-	background_music.volume_db = -5  # Slightly quieter than effects
-	background_music.autoplay = true  # Start playing right away
-	background_music.bus = "Music"  # Optional: If you have a separate audio bus for music
-	add_child(background_music)
+	background_music = create_looping_audio(
+		"res://assets/music/Silent Reverie2.mp3", 
+		-5,  # Volume
+		"Music",  # Bus
+		true  # Autoplay
+	)
+
+	background_sea_sounds1 = AudioStreamPlayer.new()
+	background_sea_sounds1.stream = load("res://assets/sounds/underwater-loop-amb-6182.mp3")
+	background_sea_sounds1.volume_db = -10
+	background_sea_sounds1.autoplay = true
+	background_sea_sounds1.bus = "SoundEffects"
+	add_child(background_sea_sounds1)
 
 # Create the camera target/viewfinder
 func create_camera_target():
@@ -610,3 +621,21 @@ func initialize_fish_announcement():
 func show_new_species_announcement(species_name):
 	if new_fish_announcement:
 		new_fish_announcement.show_announcement(species_name)
+
+# Helper function to create looping audio players
+func create_looping_audio(stream_path, volume_db = 0.0, bus = "Master", autoplay = false):
+	var audio_player = AudioStreamPlayer.new()
+	var audio_stream = load(stream_path)
+	audio_player.stream = audio_stream
+	audio_player.volume_db = volume_db
+	audio_player.bus = bus
+	
+	# Connect the finished signal to restart playback
+	audio_player.finished.connect(func(): audio_player.play())
+	
+	add_child(audio_player)
+	
+	if autoplay:
+		audio_player.play()
+	
+	return audio_player
