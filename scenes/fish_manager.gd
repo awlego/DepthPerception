@@ -40,57 +40,8 @@ func _ready():
 	if not player_node:
 		print("Warning: Player node not found. Using default position.")
 
-# Load fish database from configuration
-func load_fish_database():
-	# Create entries for all fish using the texture paths
-	var fish_entries = []
-	
-	# Common small fish (shallow water)
-	add_fish_entry(fish_entries, "res://assets/fish/fish1.png", "Blue Tang", 0.15, Vector2(0, 70), "res://assets/sounds/fish_bubble1.mp3", 1.0, false, "normal", 3)
-	add_fish_entry(fish_entries, "res://assets/fish/fish2.png", "Clownfish", 0.15, Vector2(0, 60), "res://assets/sounds/fish_bubble1.mp3", 1.0, false, "normal", 2)
-	add_fish_entry(fish_entries, "res://assets/fish/fish3.png", "Yellow Tang", 0.15, Vector2(0, 80), "res://assets/sounds/fish_bubble2.mp3", 0.9, false, "normal", 5)
-	add_fish_entry(fish_entries, "res://assets/fish/fish4.png", "Moorish Idol", 0.14, Vector2(10, 100), "res://assets/sounds/fish_bubble2.mp3", 0.8, false, "normal", 2)
-	add_fish_entry(fish_entries, "res://assets/fish/fish5.png", "Butterflyfish", 0.13, Vector2(0, 90), "res://assets/sounds/fish_bubble1.mp3", 0.9, false, "normal", 3)
-	
-	# Mid-water fish
-	add_fish_entry(fish_entries, "res://assets/fish/fish6.png", "Parrotfish", 0.20, Vector2(50, 150), "res://assets/sounds/fish_medium1.mp3", 0.8, false, "normal", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/fish7.png", "Angelfish", 0.18, Vector2(40, 140), "res://assets/sounds/fish_medium2.mp3", 0.7, false, "normal", 2)
-	add_fish_entry(fish_entries, "res://assets/fish/fish8.png", "Triggerfish", 0.22, Vector2(60, 170), "res://assets/sounds/fish_medium1.mp3", 0.6, false, "erratic", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/fish9.png", "Wrasse", 0.17, Vector2(30, 130), "res://assets/sounds/fish_medium2.mp3", 0.75, false, "normal", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/fish10.png", "Filefish", 0.19, Vector2(50, 160), "res://assets/sounds/fish_medium1.mp3", 0.65, false, "slow", 1)
-	
-	# Deeper fish
-	add_fish_entry(fish_entries, "res://assets/fish/fish11.png", "Grouper", 0.25, Vector2(120, 250), "res://assets/sounds/fish_deep1.mp3", 0.5, false, "slow", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/fish12.png", "Barracuda", 0.28, Vector2(100, 300), "res://assets/sounds/fish_deep2.mp3", 0.4, true, "erratic", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/fish13.png", "Tuna", 0.3, Vector2(150, 400), "res://assets/sounds/fish_deep1.mp3", 0.45, false, "normal", 2)
-	add_fish_entry(fish_entries, "res://assets/fish/fish14.png", "Marlin", 0.35, Vector2(180, 350), "res://assets/sounds/fish_deep2.mp3", 0.35, true, "erratic", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/fish15.png", "Mahi-Mahi", 0.27, Vector2(120, 280), "res://assets/sounds/fish_deep1.mp3", 0.55, false, "normal", 1)
-	
-	# Special creatures
-	add_fish_entry(fish_entries, "res://assets/fish/jellyfish1.png", "Jellyfish", 0.23, Vector2(0, 400), "res://assets/sounds/jellyfish.mp3", 0.6, true, "slow", 2)
-	add_fish_entry(fish_entries, "res://assets/fish/angler2.png", "Small Anglerfish", 0.25, Vector2(350, 600), "res://assets/sounds/angler.mp3", 0.3, true, "erratic", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/anglerfish.png", "Anglerfish", 0.35, Vector2(400, 800), "res://assets/sounds/angler.mp3", 0.2, true, "erratic", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/angler3.png", "Deep Anglerfish", 0.4, Vector2(600, 1000), "res://assets/sounds/angler.mp3", 0.15, true, "erratic", 1)
-	
-	# Eels
-	add_fish_entry(fish_entries, "res://assets/fish/eel.png", "Moray Eel", 0.3, Vector2(150, 500), "res://assets/sounds/eel.mp3", 0.4, true, "slow", 1) 
-	add_fish_entry(fish_entries, "res://assets/fish/spottedeel.png", "Spotted Eel", 0.28, Vector2(200, 600), "res://assets/sounds/eel.mp3", 0.35, true, "slow", 1)
-	
-	# Larger creatures
-	add_fish_entry(fish_entries, "res://assets/fish/ray1.png", "Manta Ray", 0.45, Vector2(200, 700), "res://assets/sounds/ray.mp3", 0.3, false, "slow", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/seahorse.png", "Seahorse", 0.2, Vector2(50, 200), "res://assets/sounds/seahorse.mp3", 0.5, false, "stationary", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/turtle.png", "Sea Turtle", 0.4, Vector2(100, 400), "res://assets/sounds/turtle.mp3", 0.35, false, "slow", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/hammerhead.png", "Hammerhead Shark", 0.5, Vector2(300, 800), "res://assets/sounds/shark.mp3", 0.25, true, "normal", 1)
-	
-	# Rare deep creatures
-	add_fish_entry(fish_entries, "res://assets/fish/whale.png", "Whale", 2.0, Vector2(500, 1000), "res://assets/sounds/whale.mp3", 0.1, false, "slow", 1)
-	add_fish_entry(fish_entries, "res://assets/fish/whale2.png", "Humpback Whale", 2.0, Vector2(400, 900), "res://assets/sounds/whale.mp3", 0.08, false, "slow", 1)
-	
-	fish_database = fish_entries
-	print("Loaded " + str(fish_database.size()) + " fish types into database")
-
 # Helper function to add fish entries with consistent parameter order
-func add_fish_entry(entries_array, texture, name, scale, depth_range, sound, rarity, dangerous, swim_style, school_size):
+func add_fish_entry(entries_array, texture, name, scale, depth_range, sound, rarity, dangerous, swim_style, school_size, z_index_range=Vector2(-20, 10)):
 	entries_array.append({
 		"texture_path": texture,
 		"fish_name": name,
@@ -100,8 +51,58 @@ func add_fish_entry(entries_array, texture, name, scale, depth_range, sound, rar
 		"rarity": rarity,
 		"is_dangerous": dangerous,
 		"swim_style": swim_style,
-		"school_size": school_size
+		"school_size": school_size,
+		"z_index_range": z_index_range
 	})
+
+# Load fish database from configuration
+func load_fish_database():
+	# Create entries for all fish using the texture paths
+	var fish_entries = []
+	
+	# Common small fish (shallow water)
+	add_fish_entry(fish_entries, "res://assets/fish/fish1.png", "Blue Tang", 0.15, Vector2(0, 70), "res://assets/sounds/fish_bubble1.mp3", 1.0, false, "normal", 3, Vector2(-15, 15))
+	add_fish_entry(fish_entries, "res://assets/fish/fish2.png", "Clownfish", 0.15, Vector2(0, 60), "res://assets/sounds/fish_bubble1.mp3", 1.0, false, "normal", 2, Vector2(-15, 15))
+	add_fish_entry(fish_entries, "res://assets/fish/fish3.png", "Yellow Tang", 0.15, Vector2(0, 80), "res://assets/sounds/fish_bubble2.mp3", 0.9, false, "normal", 5, Vector2(-15, 15))
+	add_fish_entry(fish_entries, "res://assets/fish/fish4.png", "Moorish Idol", 0.14, Vector2(10, 100), "res://assets/sounds/fish_bubble2.mp3", 0.8, false, "normal", 2, Vector2(-15, 15))
+	add_fish_entry(fish_entries, "res://assets/fish/fish5.png", "Butterflyfish", 0.13, Vector2(0, 90), "res://assets/sounds/fish_bubble1.mp3", 0.9, false, "normal", 3, Vector2(-15, 15))
+	
+	# Mid-water fish
+	add_fish_entry(fish_entries, "res://assets/fish/fish6.png", "Parrotfish", 0.20, Vector2(50, 150), "res://assets/sounds/fish_medium1.mp3", 0.8, false, "normal", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish7.png", "Angelfish", 0.18, Vector2(40, 140), "res://assets/sounds/fish_medium2.mp3", 0.7, false, "normal", 2, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish8.png", "Triggerfish", 0.22, Vector2(60, 170), "res://assets/sounds/fish_medium1.mp3", 0.6, false, "erratic", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish9.png", "Wrasse", 0.17, Vector2(30, 130), "res://assets/sounds/fish_medium2.mp3", 0.75, false, "normal", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish10.png", "Filefish", 0.19, Vector2(50, 160), "res://assets/sounds/fish_medium1.mp3", 0.65, false, "slow", 1, Vector2(0, 10))
+	
+	# Deeper fish
+	add_fish_entry(fish_entries, "res://assets/fish/fish11.png", "Grouper", 0.25, Vector2(120, 250), "res://assets/sounds/fish_deep1.mp3", 0.5, false, "slow", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish12.png", "Barracuda", 0.28, Vector2(100, 300), "res://assets/sounds/fish_deep2.mp3", 0.4, true, "erratic", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish13.png", "Tuna", 0.3, Vector2(150, 400), "res://assets/sounds/fish_deep1.mp3", 0.45, false, "normal", 2, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish14.png", "Marlin", 0.35, Vector2(180, 350), "res://assets/sounds/fish_deep2.mp3", 0.35, true, "erratic", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/fish15.png", "Mahi-Mahi", 0.27, Vector2(120, 280), "res://assets/sounds/fish_deep1.mp3", 0.55, false, "normal", 1, Vector2(0, 10))
+	
+	# Special creatures
+	add_fish_entry(fish_entries, "res://assets/fish/jellyfish1.png", "Jellyfish", 0.23, Vector2(0, 400), "res://assets/sounds/jellyfish.mp3", 0.6, true, "slow", 2, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/angler2.png", "Small Anglerfish", 0.25, Vector2(350, 600), "res://assets/sounds/angler.mp3", 0.3, true, "erratic", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/anglerfish.png", "Anglerfish", 0.35, Vector2(400, 800), "res://assets/sounds/angler.mp3", 0.2, true, "erratic", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/angler3.png", "Deep Anglerfish", 0.4, Vector2(600, 1000), "res://assets/sounds/angler.mp3", 0.15, true, "erratic", 1, Vector2(0, 10))
+	
+	# Eels
+	add_fish_entry(fish_entries, "res://assets/fish/eel.png", "Moray Eel", 0.3, Vector2(150, 500), "res://assets/sounds/eel.mp3", 0.4, true, "slow", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/spottedeel.png", "Spotted Eel", 0.28, Vector2(200, 600), "res://assets/sounds/eel.mp3", 0.35, true, "slow", 1, Vector2(0, 10))
+	
+	# Larger creatures
+	add_fish_entry(fish_entries, "res://assets/fish/ray1.png", "Manta Ray", 0.45, Vector2(200, 700), "res://assets/sounds/ray.mp3", 0.3, false, "slow", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/seahorse.png", "Seahorse", 0.2, Vector2(50, 200), "res://assets/sounds/seahorse.mp3", 0.5, false, "stationary", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/turtle.png", "Sea Turtle", 0.4, Vector2(100, 400), "res://assets/sounds/turtle.mp3", 0.35, false, "slow", 1, Vector2(0, 10))
+	add_fish_entry(fish_entries, "res://assets/fish/hammerhead.png", "Hammerhead Shark", 0.5, Vector2(300, 800), "res://assets/sounds/shark.mp3", 0.25, true, "normal", 1, Vector2(0, 10))
+	
+	# Rare deep creatures
+	add_fish_entry(fish_entries, "res://assets/fish/whale.png", "Whale", 2.0, Vector2(500, 1000), "res://assets/sounds/whale.mp3", 0.1, false, "slow", 1, Vector2(-20, -10))
+	add_fish_entry(fish_entries, "res://assets/fish/whale2.png", "Humpback Whale", 2.0, Vector2(400, 900), "res://assets/sounds/whale.mp3", 0.08, false, "slow", 1, Vector2(-20, -10))
+	
+	fish_database = fish_entries
+	print("Loaded " + str(fish_database.size()) + " fish types into database")
 
 # Spawn a fish based on current depth
 func spawn_fish():
@@ -163,6 +164,10 @@ func spawn_fish():
 				fish_instance.position = Vector2(randf_range(0, screen_size.x), screen_size.y + 50) + offset
 			3:  # Left
 				fish_instance.position = Vector2(-50, randf_range(0, screen_size.y)) + offset
+		
+		# Set z-index based on the fish's z_index_range
+		var z_index_range = fish_data.z_index_range if "z_index_range" in fish_data else Vector2(-10, 10)
+		fish_instance.z_index = randi_range(int(z_index_range.x), int(z_index_range.y))
 		
 		# Add to scene
 		add_child(fish_instance)
@@ -281,6 +286,10 @@ func ensure_all_zone_species_spawned():
 			randf_range(margin, screen_size.x - margin),
 			randf_range(margin, screen_size.y - margin)
 		)
+		
+		# Set z-index based on the fish's z_index_range
+		var z_index_range = fish_data.z_index_range if "z_index_range" in fish_data else Vector2(-10, 10)
+		fish_instance.z_index = randi_range(int(z_index_range.x), int(z_index_range.y))
 		
 		# Add to scene
 		add_child(fish_instance)

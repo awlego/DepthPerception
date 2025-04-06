@@ -363,15 +363,15 @@ func create_layer_shaders():
 			material.set_shader_parameter("wave_strength", 0.001)
 			material.set_shader_parameter("wave_speed", 0.2)
 		elif i == 1:
-			material.set_shader_parameter("distance", 50.0)
+			material.set_shader_parameter("distance", 120.0)
 			material.set_shader_parameter("wave_strength", 0.0012)
 			material.set_shader_parameter("wave_speed", 0.25)
 		elif i == 2:
-			material.set_shader_parameter("distance", 30.0)
+			material.set_shader_parameter("distance", 100.0)
 			material.set_shader_parameter("wave_strength", 0.0015)
 			material.set_shader_parameter("wave_speed", 0.3)
 		elif i == 3:
-			material.set_shader_parameter("distance", 22.0)
+			material.set_shader_parameter("distance", 50.0)
 			material.set_shader_parameter("wave_strength", 0.0018)
 			material.set_shader_parameter("wave_speed", 0.35)
 		elif i == 4:  # Mid layer
