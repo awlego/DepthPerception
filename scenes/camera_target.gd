@@ -3,7 +3,7 @@ extends Area2D
 signal fish_captured(fish_count)
 
 @export var rect_size: Vector2 = Vector2(150, 100)
-@export var rect_color: Color = Color(1, 0, 0, 1)  # Red color
+@export var rect_color: Color = Color(1, 1, 1, 1)
 @export var line_width: float = 2.0
 @export var crosshair_size: float = 10.0  # Size of the crosshair lines
 @export var crosshair_color: Color = Color(1, 1, 1, 1)  # White color for crosshair

@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://cndgvotnxaubi"]
+[gd_scene load_steps=3 format=3 uid="uid://cndgvotnxaubi"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_yo5ah"]
+[ext_resource type="Texture2D" uid="uid://mtepy7yeppvv" path="res://assets/background-objs/big-rock1.png" id="2_hctdv"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_yo5ah")
+
+[node name="Node2D" type="Sprite2D" parent="."]
+position = Vector2(1273, 563)
+texture = ExtResource("2_hctdv")

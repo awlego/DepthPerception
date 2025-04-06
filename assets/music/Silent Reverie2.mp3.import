@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cpxx4cva5yjqq"
+path="res://.godot/imported/Silent Reverie2.mp3-fa014f2d89cafcc7cedb95da4a68482a.mp3str"
+
+[deps]
+
+source_file="res://assets/music/Silent Reverie2.mp3"
+dest_files=["res://.godot/imported/Silent Reverie2.mp3-fa014f2d89cafcc7cedb95da4a68482a.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

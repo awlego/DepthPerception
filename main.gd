@@ -25,32 +25,36 @@ var shader_rect: ColorRect
 
 # Sound variables
 var camera_sound: AudioStreamPlayer
+var background_music: AudioStreamPlayer
 
 # Camera color settings
-var regular_camera_color = Color(1, 0, 0, 1)  # Red
-var success_camera_color = Color(0, 1, 0, 1)  # Green
-var color_reset_time = 0.3  # Time in seconds before color resets (reduced from 0.5)
+var default_camera_color = Color(1, 1, 1, 1)  # White (default)
+var success_camera_color = Color(0, 1, 0, 1)  # Green (successful capture)
+var fail_camera_color = Color(1, 0, 0, 1)     # Red (failed capture)
+var color_reset_time = 0.3  # Time in seconds before color resets
 
 # Flashlight state
 var flashlight_on: bool = false
 var flashlight = null
 var flashlight_auto_activated: bool = false
 
+# Add these variables at the top of your script with other declarations
+var parallax_bg: ParallaxBackground
+var parallax_layers = []
+var parallax_sprites = []
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# Hide the mouse cursor
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	
-	# Setup camera shutter sound
+	# Setup audio
 	setup_camera_sound()
+	setup_background_music()
 	
-	# Initialize fish types
-	fish_types = [
-		"res://assets/fish/fish1.png",
-		"res://assets/fish/fish2.png",
-		"res://assets/fish/fish3.png",
-		"res://assets/fish/fish4.png"
-	]
+	# Dynamically load all fish from the fish directory
+	fish_types = load_fish_from_directory("res://assets/fish/")
+	print("Loaded " + str(fish_types.size()) + " fish types")
 	
 	# Create fish
 	spawn_fish()
@@ -74,6 +78,9 @@ func _ready():
 	
 	# Connect flashlight signals
 	flashlight.connect("toggled", _on_flashlight_toggled)
+	
+	# Setup underwater parallax
+	# setup_underwater_parallax()
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -124,6 +131,15 @@ func setup_camera_sound():
 	camera_sound.stream = load("res://assets/sounds/camera-shutter-1.mp3")
 	camera_sound.volume_db = 0  # Normal volume, adjust as needed
 	add_child(camera_sound)
+
+# Setup the background music
+func setup_background_music():
+	background_music = AudioStreamPlayer.new()
+	background_music.stream = load("res://assets/music/Silent Reverie2.mp3")
+	background_music.volume_db = -5  # Slightly quieter than effects
+	background_music.autoplay = true  # Start playing right away
+	background_music.bus = "Music"  # Optional: If you have a separate audio bus for music
+	add_child(background_music)
 
 # Create the camera target/viewfinder
 func create_camera_target():
@@ -295,32 +311,36 @@ func take_photo():
 		if camera_target.is_fish_fully_in_viewfinder(fish):
 			fully_contained_fish.append(texture_path)
 	
-	if fully_contained_fish.size() > 0:
-		# Success! Change camera color to green
+	# Get the current target fish
+	var current_target = null
+	if target_queue and target_queue.fish_queue.size() > 0:
+		current_target = target_queue.fish_queue[target_queue.current_target_index]
+	
+	# Check if we captured the specific target fish
+	if current_target and current_target in fully_contained_fish:
+		# Success! We captured the exact target fish
 		camera_target.rect_color = success_camera_color
 		camera_target.queue_redraw()
 		
-		# Check if current target fish is fully in the viewfinder
-		var current_target = null
-		if target_queue and target_queue.fish_queue.size() > 0:
-			current_target = target_queue.fish_queue[target_queue.current_target_index]
-		
-		if current_target and current_target in fully_contained_fish:
-			# Correct target photographed!
-			target_queue.complete_current_target()
-		
-		# Reset the camera color after a delay
-		var timer = Timer.new()
-		timer.one_shot = true
-		timer.wait_time = color_reset_time
-		timer.connect("timeout", reset_camera_color)
-		add_child(timer)
-		timer.start()
+		# Complete the target
+		target_queue.complete_current_target()
+	else:
+		# Either no fish or wrong fish - show fail color (red)
+		camera_target.rect_color = fail_camera_color
+		camera_target.queue_redraw()
+	
+	# Reset the camera color after a delay
+	var timer = Timer.new()
+	timer.one_shot = true
+	timer.wait_time = color_reset_time
+	timer.connect("timeout", reset_camera_color)
+	add_child(timer)
+	timer.start()
 
-# Reset camera color to red after photo
+# Reset camera color to default white after photo
 func reset_camera_color():
 	if camera_target:
-		camera_target.rect_color = regular_camera_color
+		camera_target.rect_color = default_camera_color
 		camera_target.queue_redraw()
 	
 	# Remove the timer
@@ -378,3 +398,54 @@ func _process(delta):
 
 	# You could add gameplay effects based on depth here
 	# For example, making fish move faster or changing the background
+
+# Create a parallax background for underwater scene
+func setup_underwater_parallax():
+	# Create the main parallax background
+	var parallax_bg = ParallaxBackground.new()
+	add_child(parallax_bg)
+	
+	# Far background (distant water/coral)
+	var far_layer = ParallaxLayer.new()
+	far_layer.motion_scale = Vector2(0.1, 0.1)  # Moves very slowly
+	var far_sprite = Sprite2D.new()
+	far_sprite.texture = load("res://assets/background-objs/big-rock1.png")
+	far_layer.add_child(far_sprite)
+	parallax_bg.add_child(far_layer)
+	
+	# Mid-ground layer (mid-distance plants/rocks)
+	var mid_layer = ParallaxLayer.new()
+	mid_layer.motion_scale = Vector2(0.4, 0.4)  # Moves at medium speed
+	var mid_sprite = Sprite2D.new()
+	mid_sprite.texture = load("res://assets/background-objs/coral2.png")
+	mid_layer.add_child(mid_sprite)
+	parallax_bg.add_child(mid_layer)
+	
+	# Foreground particles (bubbles/plankton)
+	var fore_layer = ParallaxLayer.new()
+	fore_layer.motion_scale = Vector2(0.8, 0.8)  # Moves quickly
+	var fore_sprite = Sprite2D.new()
+	fore_sprite.texture = load("res://assets/background-objs/coral1.png")
+	fore_layer.add_child(fore_sprite)
+	parallax_bg.add_child(fore_layer)
+
+# Add this new function to load all fish PNGs
+func load_fish_from_directory(path):
+	var fish_list = []
+	var dir = DirAccess.open(path)
+	
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		
+		while file_name != "":
+			# Only add PNG files
+			if file_name.ends_with(".png"):
+				fish_list.append(path + file_name)
+			file_name = dir.get_next()
+		
+		dir.list_dir_end()
+	else:
+		print("Error: Could not open fish directory at " + path)
+	
+	return fish_list
