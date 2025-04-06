@@ -426,14 +426,20 @@ func load_fish_list():
 		"res://assets/fish/fish11.png",
 		"res://assets/fish/fish12.png",
 		"res://assets/fish/fish13.png",
+		"res://assets/fish/fish14.png",
+		"res://assets/fish/fish15.png",
 		"res://assets/fish/jellyfish1.png",
 		"res://assets/fish/angler2.png",
 		"res://assets/fish/anglerfish.png",
 		"res://assets/fish/eel.png",
+		"res://assets/fish/spottedeel.png",
 		"res://assets/fish/ray1.png",
 		"res://assets/fish/seahorse.png",
 		"res://assets/fish/turtle.png",
 		"res://assets/fish/whale.png",
+		"res://assets/fish/whale2.png",
+		"res://assets/fish/hammerhead.png",
+		"res://assets/fish/angler3.png",
 	]
 	return fish_list
 
