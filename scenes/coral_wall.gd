@@ -4,7 +4,7 @@ extends Node2D
 var parallax_layers = []  # Will hold our 3 layers
 var layer_speeds = [0.8, 0.9, 1.0]  # Far, mid, close (multipliers)
 var layer_scale = [0.25, 0.35, 0.5]  # Smaller scales for all layers (farther layers much smaller)
-var layer_density = [1000, 100, 50]
+var layer_density = [100, 100, 50]
 var layer_z_indices = [-10, -5, 0]  # Far to close layers
 
 # Coral wall properties
@@ -93,15 +93,10 @@ func generate_coral_segment(layer_index, vertical_position):
 	var viewport_width = get_viewport_rect().size.x
 	var screen_mid = viewport_width / 2
 	
-	# Define the minimum X position for each layer
-	# Layer 0 (farthest): starts at 50% of screen width (screen_mid)
-	# Layer 1 (middle): starts at 62.5% of screen width (screen_mid + screen_mid/4)
-	# Layer 2 (closest): starts at 75% of screen width (screen_mid + screen_mid/2)
-	var min_x_pos = screen_mid
-	if layer_index == 1:
-		min_x_pos = screen_mid + (screen_mid / 4)  # 62.5% of screen width
-	elif layer_index == 2:
-		min_x_pos = screen_mid + (screen_mid / 2)  # 75% of screen width
+	# Divide the right half of the screen into equal bands for each layer
+	var band_width = screen_mid / parallax_layers.size()
+	var band_start = screen_mid + (layer_index * band_width)
+	var band_end = band_start + band_width
 	
 	# Scale density based on layer
 	var segment_density = layer["density"]
@@ -113,9 +108,9 @@ func generate_coral_segment(layer_index, vertical_position):
 		var texture_index = randi() % coral_textures.size()
 		coral.texture = coral_textures[texture_index]
 		
-		# Random position within the segment - LAYER-SPECIFIC RIGHT SECTION
+		# Random position within the segment - LAYER-SPECIFIC BAND
 		coral.position = Vector2(
-			randf_range(min_x_pos, viewport_width),  # Only spawn in appropriate right section
+			randf_range(band_start, band_end),  # Only spawn in this layer's band
 			randf_range(0, segment_height)
 		)
 		
@@ -208,15 +203,10 @@ func regenerate_segment_contents(layer_index, segment):
 	var viewport_width = get_viewport_rect().size.x
 	var screen_mid = viewport_width / 2
 	
-	# Define the minimum X position for each layer
-	# Layer 0 (farthest): starts at 50% of screen width (screen_mid)
-	# Layer 1 (middle): starts at 62.5% of screen width (screen_mid + screen_mid/4)
-	# Layer 2 (closest): starts at 75% of screen width (screen_mid + screen_mid/2)
-	var min_x_pos = screen_mid
-	if layer_index == 1:
-		min_x_pos = screen_mid + (screen_mid / 4)  # 62.5% of screen width
-	elif layer_index == 2:
-		min_x_pos = screen_mid + (screen_mid / 2)  # 75% of screen width
+	# Divide the right half of the screen into equal bands for each layer
+	var band_width = screen_mid / parallax_layers.size()
+	var band_start = screen_mid + (layer_index * band_width)
+	var band_end = band_start + band_width
 	
 	# Scale density based on layer
 	var segment_density = layer["density"]
@@ -228,9 +218,9 @@ func regenerate_segment_contents(layer_index, segment):
 		var texture_index = randi() % coral_textures.size()
 		coral.texture = coral_textures[texture_index]
 		
-		# Random position within the segment - LAYER-SPECIFIC RIGHT SECTION
+		# Random position within the segment - LAYER-SPECIFIC BAND
 		coral.position = Vector2(
-			randf_range(min_x_pos, viewport_width),  # Only spawn in appropriate right section
+			randf_range(band_start, band_end),  # Only spawn in this layer's band
 			randf_range(0, segment_height)
 		)
 		
