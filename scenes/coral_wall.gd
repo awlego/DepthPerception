@@ -4,7 +4,7 @@ extends Node2D
 var parallax_layers = []  # Will hold our 5 layers
 var layer_speeds = [0.96, 0.97, 0.98, 0.99, 1.0]  # Far -> close (multipliers)
 var layer_scale = [0.15, 0.20, 0.30, 0.40, 0.50]  # Smaller scales for farther layers
-var base_density = 8
+var base_density = 6
 var layer_density = []  # Will be populated in _ready()
 var layer_z_indices = [-20, -15, -10, -5, 0]  # Far to close layers
 
