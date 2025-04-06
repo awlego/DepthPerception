@@ -431,21 +431,28 @@ func setup_underwater_parallax():
 
 # Add this new function to load all fish PNGs
 func load_fish_from_directory(path):
-	var fish_list = []
-	var dir = DirAccess.open(path)
+	# var fish_list = []
+	# var dir = DirAccess.open(path)
 	
-	if dir:
-		dir.list_dir_begin()
-		var file_name = dir.get_next()
+	# if dir:
+	# 	dir.list_dir_begin()
+	# 	var file_name = dir.get_next()
 		
-		while file_name != "":
-			# Only add PNG files
-			if file_name.ends_with(".png"):
-				fish_list.append(path + file_name)
-			file_name = dir.get_next()
+	# 	while file_name != "":
+	# 		# Only add PNG files
+	# 		if file_name.ends_with(".png"):
+	# 			fish_list.append(path + file_name)
+	# 		file_name = dir.get_next()
 		
-		dir.list_dir_end()
-	else:
-		print("Error: Could not open fish directory at " + path)
+	# 	dir.list_dir_end()
+	# else:
+	# 	print("Error: Could not open fish directory at " + path)
 	
+
+	var fish_list = [
+		"res://assets/fish/fish1.png",
+		"res://assets/fish/fish2.png",
+		"res://assets/fish/fish3.png",
+		"res://assets/fish/fish4.png"
+	]
 	return fish_list
