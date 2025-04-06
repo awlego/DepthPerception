@@ -40,6 +40,9 @@ var coral_wall = null
 # Fish manager
 var fish_manager
 
+# God rays
+var god_rays = null
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# Hide the mouse cursor
@@ -73,6 +76,8 @@ func _ready():
 	# Create the target fish queue
 	create_target_queue()
 
+	# Initialize the god rays
+	initialize_god_rays()
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -432,6 +437,10 @@ func _process(delta):
 		# Update coral wall with new depth
 		if coral_wall:
 			coral_wall.update_depth(current_depth)
+		
+		# Update god rays with current depth
+		if god_rays:
+			god_rays.update_depth(current_depth)
 	
 	# Auto-activate flashlight at 25m depth if it's off
 	if flashlight and current_depth > 25.0 and not flashlight_auto_activated and not flashlight.flashlight_on:
@@ -485,38 +494,6 @@ func refresh_target_queue():
 		
 		create_target_queue()  # This will create new targets based on current depth
 
-# # Add this new function to load all fish PNGs
-# func load_fish_list():
-# 	var fish_list = [
-# 		"res://assets/fish/fish1.png",
-# 		"res://assets/fish/fish2.png",
-# 		"res://assets/fish/fish3.png",
-# 		"res://assets/fish/fish4.png",
-# 		"res://assets/fish/fish5.png",
-# 		"res://assets/fish/fish6.png",
-# 		"res://assets/fish/fish7.png",
-# 		"res://assets/fish/fish8.png",
-# 		"res://assets/fish/fish9.png",
-# 		"res://assets/fish/fish10.png",
-# 		"res://assets/fish/fish11.png",
-# 		"res://assets/fish/fish12.png",
-# 		"res://assets/fish/fish13.png",
-# 		"res://assets/fish/fish14.png",
-# 		"res://assets/fish/fish15.png",
-# 		"res://assets/fish/jellyfish1.png",
-# 		"res://assets/fish/angler2.png",
-# 		"res://assets/fish/anglerfish.png",
-# 		"res://assets/fish/eel.png",
-# 		"res://assets/fish/spottedeel.png",
-# 		"res://assets/fish/ray1.png",
-# 		"res://assets/fish/seahorse.png",
-# 		"res://assets/fish/turtle.png",
-# 		"res://assets/fish/whale.png",
-# 		"res://assets/fish/whale2.png",
-# 		"res://assets/fish/hammerhead.png",
-# 		"res://assets/fish/angler3.png",
-# 	]
-# 	return fish_list
 
 # New method to initialize flashlight
 func initialize_flashlight():
@@ -560,3 +537,14 @@ func initialize_flashlight():
 	# Connect flashlight signals
 	flashlight.connect("toggled", _on_flashlight_toggled)
 	print("Flashlight initialization complete")
+
+# Add this function to initialize the god rays
+func initialize_god_rays():
+	var god_rays_scene = load("res://scenes/god_rays.tscn")
+	god_rays = god_rays_scene.instantiate()
+	
+	# Create a CanvasLayer to hold the rays
+	var rays_layer = CanvasLayer.new()
+	rays_layer.layer = 5  # Adjust as needed
+	add_child(rays_layer)
+	rays_layer.add_child(god_rays)
