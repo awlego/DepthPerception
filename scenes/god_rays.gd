@@ -3,8 +3,8 @@ extends ColorRect
 class_name GodRays
 
 # Export parameters for the new shader
-@export var ray_angle: float = -0.3
-@export var ray_position: float = -0.2  # Renamed from 'position' to avoid conflict
+@export var ray_angle: float = 0.0
+@export var ray_position: float = 0.0  # Renamed from 'position' to avoid conflict
 @export var spread: float = 0.5
 @export var cutoff: float = 0.1
 @export var falloff: float = 0.2
@@ -17,6 +17,7 @@ class_name GodRays
 @export var hdr: bool = false
 @export var seed_value: float = 5.0
 @export var max_depth: float = 60.0  # Rays disappear completely beyond this depth
+@export var vertical_fade: float = 0.7
 
 # Internal variables
 var current_depth = 0.0
@@ -59,7 +60,7 @@ func update_shader_parameters():
 		shader_material.set_shader_parameter("color", ray_color)
 		shader_material.set_shader_parameter("hdr", hdr)
 		shader_material.set_shader_parameter("seed", seed_value)
-
+		shader_material.set_shader_parameter("vertical_fade", vertical_fade)
 # Update ray visibility based on depth - modify the alpha to fade out rays with depth
 func update_depth(depth):
 	current_depth = depth
