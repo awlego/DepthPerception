@@ -1,11 +1,12 @@
 extends Node2D
 
 # Parallax layers
-var parallax_layers = []  # Will hold our 3 layers
-var layer_speeds = [0.8, 0.9, 1.0]  # Far, mid, close (multipliers)
-var layer_scale = [0.25, 0.35, 0.5]  # Smaller scales for all layers (farther layers much smaller)
-var layer_density = [100, 100, 50]
-var layer_z_indices = [-10, -5, 0]  # Far to close layers
+var parallax_layers = []  # Will hold our 5 layers
+var layer_speeds = [0.96, 0.97, 0.98, 0.99, 1.0]  # Far -> close (multipliers)
+var layer_scale = [0.15, 0.20, 0.30, 0.40, 0.50]  # Smaller scales for farther layers
+var base_density = 8
+var layer_density = []  # Will be populated in _ready()
+var layer_z_indices = [-20, -15, -10, -5, 0]  # Far to close layers
 
 # Coral wall properties
 var coral_textures = []  # Will hold all coral textures
@@ -31,16 +32,24 @@ var layer_materials = []
 
 # Called when the node enters the scene tree for the first time
 func _ready():
+	# Initialize layer density based on scale
+	layer_density = []
+	for s in layer_scale:
+		layer_density.append(round(1/s**2) * base_density)
+	
 	# Load all coral textures
 	preload_coral_textures()
 	
-	# Create our three parallax layers
+	# Create our five parallax layers
 	setup_parallax_layers()
 	
 	# Generate initial segments for each layer
 	for layer_index in range(parallax_layers.size()):
 		for i in range(num_visible_segments):
 			generate_coral_segment(layer_index, i * segment_height)
+	
+	# Debug print coral count per layer
+	print_coral_counts()
 
 # Preload all coral textures
 func preload_coral_textures():
@@ -56,10 +65,10 @@ func preload_coral_textures():
 	# Create shader materials for each layer
 	create_layer_shaders()
 
-# Setup the three parallax layers
+# Setup the parallax layers
 func setup_parallax_layers():
-	# Create 3 layers - far, mid, close
-	for i in range(3):
+	# Create 5 layers - farthest to closest
+	for i in range(5):  # Changed from 3 to 5
 		var layer = {
 			"node": Node2D.new(),
 			"segments": [],
@@ -141,7 +150,7 @@ func generate_coral_segment(layer_index, vertical_position):
 		
 		# Add to segment
 		segment.add_child(coral)
-		update_coral_shader_params(coral, layer_index)
+		update_coral_shader_params(coral)
 	
 	# Track this segment in the layer
 	layer["segments"].append(segment)
@@ -175,7 +184,7 @@ func update_depth(new_depth):
 			# After moving the segment, update all coral shader params
 			for coral in segment.get_children():
 				if coral is Sprite2D and coral.material:
-					update_coral_shader_params(coral, layer_index)
+					update_coral_shader_params(coral)
 			
 			# If this segment has moved off screen, reposition it
 			if segment.position.y < -segment_height:
@@ -253,7 +262,7 @@ func regenerate_segment_contents(layer_index, segment):
 			print("Applied unique material to regenerated coral in layer", layer_index)
 		
 		segment.add_child(coral)
-		update_coral_shader_params(coral, layer_index)
+		update_coral_shader_params(coral)
 
 # Called every frame
 func _process(delta):
@@ -284,26 +293,31 @@ func create_layer_shaders():
 		return  # Exit the function if shader isn't found
 	
 	# Create shader materials for each layer with different parameter sets
-	for i in range(3):
+	for i in range(5):  # Changed from 3 to 5
 		var material = ShaderMaterial.new()
 		material.shader = coral_shader
 		
-		# Configure parameters based on layer
-		if i == 0:  # Far layer
-			material.set_shader_parameter("distance", 100.0)
-			material.set_shader_parameter("blue_tint", 0.4)
-			material.set_shader_parameter("wave_strength", 0.002)
+		# Configure parameters based on layer with more gradual transitions
+		if i == 0:  # Furthest layer
+			material.set_shader_parameter("distance", 20.0)
+			material.set_shader_parameter("wave_strength", 0.001)
+			material.set_shader_parameter("wave_speed", 0.2)
+		elif i == 1:  # Far layer
+			material.set_shader_parameter("distance", 15.0)
+			material.set_shader_parameter("wave_strength", 0.0015)
 			material.set_shader_parameter("wave_speed", 0.3)
-		elif i == 1:  # Mid layer
-			material.set_shader_parameter("distance", 40.0)
-			material.set_shader_parameter("blue_tint", 0.2)
-			material.set_shader_parameter("wave_strength", 0.003)
-			material.set_shader_parameter("wave_speed", 0.5)
-		else:  # Close layer
+		elif i == 2:  # Mid layer
+			material.set_shader_parameter("distance", 10.0)
+			material.set_shader_parameter("wave_strength", 0.002)
+			material.set_shader_parameter("wave_speed", 0.4)
+		elif i == 3:  # Near layer
 			material.set_shader_parameter("distance", 5.0)
-			material.set_shader_parameter("blue_tint", 0.1)
+			material.set_shader_parameter("wave_strength", 0.003)
+			material.set_shader_parameter("wave_speed", 0.6)
+		else:  # Closest layer
+			material.set_shader_parameter("distance", 0.0)
 			material.set_shader_parameter("wave_strength", 0.004)
-			material.set_shader_parameter("wave_speed", 0.7)
+			material.set_shader_parameter("wave_speed", 0.8)
 		
 		# Add a unique wave offset for each layer to prevent synchronized movement
 		material.set_shader_parameter("wave_offset", randf() * 10.0)
@@ -361,9 +375,25 @@ func connect_to_flashlight(flashlight_node):
 		flashlight_node.add_shader(material)
 
 # Helper function to update shader position parameters for a coral sprite
-func update_coral_shader_params(coral: Sprite2D, layer_index: int):
+func update_coral_shader_params(coral: Sprite2D):
 	if coral.material:
 		# Now we're using the coral's own unique material instance
 		coral.material.set_shader_parameter("sprite_world_position", coral.global_position)
 		coral.material.set_shader_parameter("sprite_size", coral.texture.get_size() * coral.scale)
 		coral.material.set_shader_parameter("screen_size", get_viewport_rect().size)
+
+# Add this new function to count and print coral per layer
+func print_coral_counts():
+	print("=== Coral Count Per Layer ===")
+	for layer_index in range(parallax_layers.size()):
+		var layer = parallax_layers[layer_index]
+		var coral_count = 0
+		
+		# Count all coral in this layer's segments
+		for segment in layer["segments"]:
+			coral_count += segment.get_child_count()
+		
+		print("Layer ", layer_index, " (scale: ", layer_scale[layer_index], 
+			", target density: ", layer_density[layer_index], 
+			"): ", coral_count, " coral")
+	print("===========================")
