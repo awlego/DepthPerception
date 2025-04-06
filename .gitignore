@@ -68,3 +68,6 @@ ios/Index/
 *.dSYM/
 *.dSYM.zip
 *.app/
+
+# Builds
+builds/
