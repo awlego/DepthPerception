@@ -53,7 +53,7 @@ func _ready():
 	setup_background_music()
 	
 	# Dynamically load all fish from the fish directory
-	fish_types = load_fish_from_directory("res://assets/fish/")
+	fish_types = load_fish_list()
 	print("Loaded " + str(fish_types.size()) + " fish types")
 	
 	# Create fish
@@ -430,30 +430,28 @@ func setup_underwater_parallax():
 	parallax_bg.add_child(fore_layer)
 
 # Add this new function to load all fish PNGs
-func load_fish_from_directory(path):
-	# var fish_list = []
-	# var dir = DirAccess.open(path)
-	
-	# if dir:
-	# 	dir.list_dir_begin()
-	# 	var file_name = dir.get_next()
-		
-	# 	while file_name != "":
-	# 		# Only add PNG files
-	# 		if file_name.ends_with(".png"):
-	# 			fish_list.append(path + file_name)
-	# 		file_name = dir.get_next()
-		
-	# 	dir.list_dir_end()
-	# else:
-	# 	print("Error: Could not open fish directory at " + path)
-	
-
+func load_fish_list():
 	var fish_list = [
 		"res://assets/fish/fish1.png",
 		"res://assets/fish/fish2.png",
 		"res://assets/fish/fish3.png",
 		"res://assets/fish/fish4.png",
-		"res://assets/fish/jellyfish1.png"
+		"res://assets/fish/fish5.png",
+		"res://assets/fish/fish6.png",
+		"res://assets/fish/fish7.png",
+		"res://assets/fish/fish8.png",
+		"res://assets/fish/fish9.png",
+		"res://assets/fish/fish10.png",
+		"res://assets/fish/fish11.png",
+		"res://assets/fish/fish12.png",
+		"res://assets/fish/fish13.png",
+		"res://assets/fish/jellyfish1.png",
+		"res://assets/fish/angler2.png",
+		"res://assets/fish/anglerfish.png",
+		"res://assets/fish/eel.png",
+		"res://assets/fish/ray1.png",
+		"res://assets/fish/seahorse.png",
+		"res://assets/fish/turtle.png",
+		"res://assets/fish/whale.png",
 	]
 	return fish_list

@@ -1,11 +1,80 @@
-[gd_scene load_steps=3 format=3 uid="uid://cndgvotnxaubi"]
+[gd_scene load_steps=7 format=3 uid="uid://cndgvotnxaubi"]
 
 [ext_resource type="Script" uid="uid://cpd0vlk6mtkfo" path="res://main.gd" id="1_yo5ah"]
 [ext_resource type="Texture2D" uid="uid://mtepy7yeppvv" path="res://assets/background-objs/big-rock1.png" id="2_hctdv"]
+[ext_resource type="Texture2D" uid="uid://cl122etaaq1f3" path="res://assets/background-objs/coral1.png" id="3_7mycd"]
+[ext_resource type="Texture2D" uid="uid://byp0hmdtugf0i" path="res://assets/background-objs/coral2.png" id="4_272bh"]
+[ext_resource type="Texture2D" uid="uid://bjpn8h712nygl" path="res://assets/background-objs/coral3.png" id="5_5vw27"]
+[ext_resource type="Texture2D" uid="uid://x4mup0nxnjit" path="res://assets/background-objs/coral4.png" id="6_kek77"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_yo5ah")
 
 [node name="Node2D" type="Sprite2D" parent="."]
-position = Vector2(1273, 563)
+position = Vector2(1499, 493)
+scale = Vector2(1.37402, 1.35612)
 texture = ExtResource("2_hctdv")
+
+[node name="Coral1" type="Sprite2D" parent="."]
+position = Vector2(1158, 14)
+texture = ExtResource("3_7mycd")
+
+[node name="Coral2" type="Sprite2D" parent="."]
+position = Vector2(1103, 389)
+texture = ExtResource("4_272bh")
+
+[node name="Coral3" type="Sprite2D" parent="."]
+position = Vector2(1038, 675)
+texture = ExtResource("5_5vw27")
+
+[node name="Coral4" type="Sprite2D" parent="."]
+position = Vector2(929, 947)
+texture = ExtResource("6_kek77")
+
+[node name="Coral5" type="Sprite2D" parent="."]
+position = Vector2(1333, 125)
+texture = ExtResource("4_272bh")
+
+[node name="Coral6" type="Sprite2D" parent="."]
+position = Vector2(1304, 359)
+texture = ExtResource("3_7mycd")
+
+[node name="Coral7" type="Sprite2D" parent="."]
+position = Vector2(1250, 621)
+texture = ExtResource("5_5vw27")
+
+[node name="Coral8" type="Sprite2D" parent="."]
+position = Vector2(1118, 985)
+texture = ExtResource("6_kek77")
+
+[node name="Coral9" type="Sprite2D" parent="."]
+position = Vector2(1545, 198)
+texture = ExtResource("6_kek77")
+
+[node name="Coral10" type="Sprite2D" parent="."]
+position = Vector2(1480, 592)
+texture = ExtResource("3_7mycd")
+
+[node name="Coral11" type="Sprite2D" parent="."]
+position = Vector2(1321, 929)
+texture = ExtResource("3_7mycd")
+
+[node name="Coral12" type="Sprite2D" parent="."]
+position = Vector2(1781, 156)
+texture = ExtResource("4_272bh")
+
+[node name="Coral13" type="Sprite2D" parent="."]
+position = Vector2(1653, 464)
+texture = ExtResource("4_272bh")
+
+[node name="Coral14" type="Sprite2D" parent="."]
+position = Vector2(1595, 765)
+texture = ExtResource("6_kek77")
+
+[node name="Coral15" type="Sprite2D" parent="."]
+position = Vector2(1563, 996)
+texture = ExtResource("6_kek77")
+
+[node name="Coral16" type="Sprite2D" parent="."]
+position = Vector2(1819, 811)
+texture = ExtResource("5_5vw27")
