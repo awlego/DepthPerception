@@ -453,6 +453,7 @@ func load_fish_from_directory(path):
 		"res://assets/fish/fish1.png",
 		"res://assets/fish/fish2.png",
 		"res://assets/fish/fish3.png",
-		"res://assets/fish/fish4.png"
+		"res://assets/fish/fish4.png",
+		"res://assets/fish/jellyfish1.png"
 	]
 	return fish_list
