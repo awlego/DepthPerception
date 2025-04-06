@@ -4,7 +4,7 @@ extends Node
 signal toggled(is_on)
 
 # Flashlight parameters
-var shader: ShaderMaterial = null
+var shaders = [] # Will hold all shaders that need flashlight updates
 var flashlight_on: bool = false
 
 # Default values
@@ -18,13 +18,25 @@ const MAX_INTENSITY := 1.0
 const MIN_FALLOFF := 1.0
 const MAX_FALLOFF := 5.0
 
-# Initialize the flashlight with a shader
+# Initialize with a single shader (for backwards compatibility)
 func initialize(material: ShaderMaterial):
-	shader = material
+	add_shader(material)
 	set_parameters()
-	
+
+# Add a shader to be controlled by this flashlight
+func add_shader(material: ShaderMaterial):
+	if material and !shaders.has(material):
+		shaders.append(material)
+		# Apply current settings to the new shader
+		set_shader_parameters(material)
+		
 # Set initial flashlight parameters
 func set_parameters():
+	for shader in shaders:
+		set_shader_parameters(shader)
+
+# Apply parameters to a specific shader
+func set_shader_parameters(shader):
 	if shader:
 		shader.set_shader_parameter("light_radius", DEFAULT_RADIUS)
 		shader.set_shader_parameter("light_intensity", DEFAULT_INTENSITY)
@@ -38,40 +50,63 @@ func toggle(force_state = null):
 	else:
 		flashlight_on = !flashlight_on
 	
-	if shader:
+	for shader in shaders:
 		shader.set_shader_parameter("flashlight_on", flashlight_on)
-		print("Flashlight", " ON" if flashlight_on else " OFF")
-		emit_signal("toggled", flashlight_on)
+	
+	print("Flashlight", " ON" if flashlight_on else " OFF")
+	emit_signal("toggled", flashlight_on)
 
 # Update the light position based on screen coordinates
 func update_position(screen_pos: Vector2, viewport_size: Vector2):
-	if shader:
-		var light_pos = Vector2(
-			screen_pos.x / viewport_size.x,
-			screen_pos.y / viewport_size.y
-		)
+	var light_pos = Vector2(
+		screen_pos.x / viewport_size.x,
+		screen_pos.y / viewport_size.y
+	)
+	
+	for shader in shaders:
 		shader.set_shader_parameter("light_position", light_pos)
 
 # Adjust the flashlight radius
 func adjust_radius(amount: float):
-	if shader:
-		var current_radius = shader.get_shader_parameter("light_radius")
-		var new_radius = clamp(current_radius + amount, MIN_RADIUS, MAX_RADIUS)
+	var new_radius = DEFAULT_RADIUS
+	
+	# Get current radius from first shader if available
+	if shaders.size() > 0:
+		new_radius = shaders[0].get_shader_parameter("light_radius")
+	
+	new_radius = clamp(new_radius + amount, MIN_RADIUS, MAX_RADIUS)
+	
+	for shader in shaders:
 		shader.set_shader_parameter("light_radius", new_radius)
-		print("Flashlight radius: ", new_radius)
+	
+	print("Flashlight radius: ", new_radius)
 
 # Adjust the flashlight intensity
 func adjust_intensity(amount: float):
-	if shader:
-		var current_intensity = shader.get_shader_parameter("light_intensity")
-		var new_intensity = clamp(current_intensity + amount, MIN_INTENSITY, MAX_INTENSITY)
+	var new_intensity = DEFAULT_INTENSITY
+	
+	# Get current intensity from first shader if available
+	if shaders.size() > 0:
+		new_intensity = shaders[0].get_shader_parameter("light_intensity")
+	
+	new_intensity = clamp(new_intensity + amount, MIN_INTENSITY, MAX_INTENSITY)
+	
+	for shader in shaders:
 		shader.set_shader_parameter("light_intensity", new_intensity)
-		print("Flashlight intensity: ", new_intensity)
+	
+	print("Flashlight intensity: ", new_intensity)
 
 # Adjust the flashlight edge softness
 func adjust_falloff(amount: float):
-	if shader:
-		var current_falloff = shader.get_shader_parameter("light_falloff")
-		var new_falloff = clamp(current_falloff + amount, MIN_FALLOFF, MAX_FALLOFF)
+	var new_falloff = DEFAULT_FALLOFF
+	
+	# Get current falloff from first shader if available
+	if shaders.size() > 0:
+		new_falloff = shaders[0].get_shader_parameter("light_falloff")
+	
+	new_falloff = clamp(new_falloff + amount, MIN_FALLOFF, MAX_FALLOFF)
+	
+	for shader in shaders:
 		shader.set_shader_parameter("light_falloff", new_falloff)
-		print("Flashlight falloff: ", new_falloff)
+	
+	print("Flashlight falloff: ", new_falloff)

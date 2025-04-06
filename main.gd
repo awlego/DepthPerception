@@ -12,6 +12,7 @@ var camera_target = null
 var target_queue = null
 var captured_count = 0
 var total_targets = 0
+var fps_label: Label
 
 # Depth tracking
 var current_depth: float = 0.0
@@ -69,21 +70,13 @@ func _ready():
 	# Setup depth shader
 	setup_depth_shader()
 	
-	# Initialize flashlight
-	flashlight = load("res://scenes/flashlight.tscn").instantiate()
-	add_child(flashlight)
-	flashlight.initialize(depth_shader)
-	
-	# Connect flashlight signals
-	flashlight.connect("toggled", _on_flashlight_toggled)
-	
-	# Setup underwater parallax
-	# setup_underwater_parallax()
-	
 	# Initialize coral wall
 	var coral_wall_scene = load("res://scenes/coral_wall.tscn")
 	coral_wall = coral_wall_scene.instantiate()
 	add_child(coral_wall)
+	
+	# Now initialize flashlight AFTER both the depth filter and coral wall exist
+	initialize_flashlight()
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -234,6 +227,13 @@ func create_ui():
 	depth_label.text = "Depth: 0m"
 	depth_label.position = Vector2(20, 50)  # Position below score label
 	ui_layer.add_child(depth_label)  # Add to UI layer instead of root
+	
+	# Create an FPS counter label
+	fps_label = Label.new()
+	fps_label.text = "FPS: 0"
+	fps_label.position = Vector2(20, 80)  # Position below depth label
+	fps_label.modulate = Color(1, 1, 0)  # Yellow color for visibility
+	ui_layer.add_child(fps_label)
 
 # Update the depth display
 func update_depth_display():
@@ -403,6 +403,10 @@ func _process(delta):
 		flashlight_auto_activated = true  # Set the flag so this only happens once
 		print("Depth reached 25m - flashlight automatically activated")
 
+	# Update FPS counter
+	if fps_label:
+		fps_label.text = "FPS: " + str(Engine.get_frames_per_second())
+
 	# You could add gameplay effects based on depth here
 	# For example, making fish move faster or changing the background
 
@@ -432,3 +436,46 @@ func load_fish_list():
 		"res://assets/fish/whale.png",
 	]
 	return fish_list
+
+# New method to initialize flashlight
+func initialize_flashlight():
+	# Initialize flashlight
+	flashlight = load("res://scenes/flashlight.tscn").instantiate()
+	add_child(flashlight)
+	
+	# Check that DepthFilter exists
+	var depth_filter = get_node_or_null("DepthFilter")
+	if not depth_filter:
+		print("WARNING: DepthFilter node not found, using shader_rect material instead")
+		depth_filter = shader_rect # Use the ColorRect from setup_depth_shader
+	
+	# Get references to both shaders
+	var depth_filter_shader = depth_filter.material
+	
+	# Verify coral_wall exists
+	if not coral_wall:
+		push_error("Coral wall not found or initialized properly")
+		return
+		
+	# Get coral materials
+	var coral_shader_materials = coral_wall.get_shader_materials()
+	if coral_shader_materials.size() == 0:
+		print("WARNING: No coral shader materials found")
+	
+	# Initialize the flashlight with the depth filter shader
+	if depth_filter_shader:
+		flashlight.initialize(depth_filter_shader)
+		print("Flashlight initialized with depth filter shader")
+	else:
+		push_error("No depth filter shader found to initialize flashlight")
+		return
+	
+	# Add all coral materials to be controlled by the flashlight
+	for material in coral_shader_materials:
+		if material:
+			flashlight.add_shader(material)
+			print("Added coral material to flashlight")
+	
+	# Connect flashlight signals
+	flashlight.connect("toggled", _on_flashlight_toggled)
+	print("Flashlight initialization complete")

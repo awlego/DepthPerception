@@ -52,6 +52,9 @@ func preload_coral_textures():
 		preload("res://assets/background-objs/coral4.png"),
 		# Add more coral textures as needed
 	]
+	
+	# Create shader materials for each layer
+	create_layer_shaders()
 
 # Setup the three parallax layers
 func setup_parallax_layers():
@@ -129,8 +132,21 @@ func generate_coral_segment(layer_index, vertical_position):
 		if randf() > 0.5:
 			coral.flip_h = true
 		
+		if layer_index < layer_materials.size() and layer_materials[layer_index]:
+			# Create a unique copy of the material for this coral
+			var unique_material = layer_materials[layer_index].duplicate()
+			coral.material = unique_material
+			
+			# Initial setup of shader parameters for this specific coral
+			unique_material.set_shader_parameter("sprite_world_position", coral.global_position)
+			unique_material.set_shader_parameter("sprite_size", coral.texture.get_size() * coral.scale)
+			unique_material.set_shader_parameter("screen_size", get_viewport_rect().size)
+			
+			print("Applied unique material to coral in layer", layer_index)
+		
 		# Add to segment
 		segment.add_child(coral)
+		update_coral_shader_params(coral, layer_index)
 	
 	# Track this segment in the layer
 	layer["segments"].append(segment)
@@ -160,6 +176,11 @@ func update_depth(new_depth):
 		# Move all segments in this layer
 		for segment in layer["segments"]:
 			segment.position.y -= layer_move_amount
+			
+			# After moving the segment, update all coral shader params
+			for coral in segment.get_children():
+				if coral is Sprite2D and coral.material:
+					update_coral_shader_params(coral, layer_index)
 			
 			# If this segment has moved off screen, reposition it
 			if segment.position.y < -segment_height:
@@ -229,19 +250,48 @@ func regenerate_segment_contents(layer_index, segment):
 		if randf() > 0.5:
 			coral.flip_h = true
 		
+		if layer_index < layer_materials.size() and layer_materials[layer_index]:
+			# Create a unique copy of the material for this coral
+			var unique_material = layer_materials[layer_index].duplicate()
+			coral.material = unique_material
+			
+			# Initial setup of shader parameters for this specific coral
+			unique_material.set_shader_parameter("sprite_world_position", coral.global_position)
+			unique_material.set_shader_parameter("sprite_size", coral.texture.get_size() * coral.scale)
+			unique_material.set_shader_parameter("screen_size", get_viewport_rect().size)
+			
+			print("Applied unique material to regenerated coral in layer", layer_index)
+		
 		segment.add_child(coral)
+		update_coral_shader_params(coral, layer_index)
 
 # Called every frame
 func _process(delta):
+	# We no longer need this since we update after movement
+	# for layer_index in range(parallax_layers.size()):
+	#     var layer = parallax_layers[layer_index]
+	#     for segment in layer["segments"]:
+	#         for coral in segment.get_children():
+	#             if coral is Sprite2D:
+	#                 update_coral_shader_params(coral, layer_index)
+	
 	# In a real implementation, main.gd would call update_depth()
 	# But for testing we can uncomment this:
 	# update_depth(current_depth + delta)
 	pass
 
-# Replace your create_layer_shaders function with this
+# Replace your create_layer_shaders function
 func create_layer_shaders():
-	# Load a single shader
-	coral_shader = load("res://assets/shaders/coral_underwater.gdshader")
+	# Try to load the shader
+	var shader_path = "res://assets/shaders/distance_shader.gdshader"
+	
+	# Check if the shader exists
+	if ResourceLoader.exists(shader_path):
+		coral_shader = load(shader_path)
+		print("Shader loaded successfully")
+	else:
+		print("WARNING: Shader not found at path: " + shader_path)
+		return  # Exit the function if shader isn't found
 	
 	# Create shader materials for each layer with different parameter sets
 	for i in range(3):
@@ -250,28 +300,80 @@ func create_layer_shaders():
 		
 		# Configure parameters based on layer
 		if i == 0:  # Far layer
-			material.set_shader_parameter("distance", 100)
+			material.set_shader_parameter("distance", 100.0)
 			material.set_shader_parameter("blue_tint", 0.4)
 			material.set_shader_parameter("wave_strength", 0.002)
 			material.set_shader_parameter("wave_speed", 0.3)
-			material.set_shader_parameter("brightness", 0.9)
-			material.set_shader_parameter("contrast", 0.9)
 		elif i == 1:  # Mid layer
-			material.set_shader_parameter("distance", 40)
+			material.set_shader_parameter("distance", 40.0)
 			material.set_shader_parameter("blue_tint", 0.2)
 			material.set_shader_parameter("wave_strength", 0.003)
 			material.set_shader_parameter("wave_speed", 0.5)
-			material.set_shader_parameter("brightness", 1.0)
-			material.set_shader_parameter("contrast", 1.0)
 		else:  # Close layer
-			material.set_shader_parameter("distance", 5)
+			material.set_shader_parameter("distance", 5.0)
 			material.set_shader_parameter("blue_tint", 0.1)
 			material.set_shader_parameter("wave_strength", 0.004)
 			material.set_shader_parameter("wave_speed", 0.7)
-			material.set_shader_parameter("brightness", 1.1)
-			material.set_shader_parameter("contrast", 1.1)
 		
 		# Add a unique wave offset for each layer to prevent synchronized movement
 		material.set_shader_parameter("wave_offset", randf() * 10.0)
 		
+		# Set initial flashlight parameters (disabled by default)
+		material.set_shader_parameter("flashlight_on", false)
+		material.set_shader_parameter("light_position", Vector2(0.5, 0.5))
+		material.set_shader_parameter("light_radius", 0.3)
+		material.set_shader_parameter("light_intensity", 1.5)
+		material.set_shader_parameter("light_falloff", 3.0)
+		
+		# Add these critical position parameters
+		material.set_shader_parameter("sprite_world_position", Vector2(0, 0))
+		material.set_shader_parameter("sprite_size", Vector2(0, 0))
+		material.set_shader_parameter("screen_size", get_viewport_rect().size)
+		
 		layer_materials.append(material)
+
+# Add this function to update flashlight parameters
+func update_flashlight(is_on, position=Vector2(0.5, 0.5), radius=0.3, intensity=1.5, falloff=3.0):
+	# Update flashlight parameters on all individual coral materials
+	for layer_index in range(parallax_layers.size()):
+		var layer = parallax_layers[layer_index]
+		
+		for segment in layer["segments"]:
+			for coral in segment.get_children():
+				if coral is Sprite2D and coral.material:
+					coral.material.set_shader_parameter("flashlight_on", is_on)
+					
+					# Convert position to UV coordinates (0-1 range)
+					var viewport_size = get_viewport_rect().size
+					var light_pos_uv = Vector2(
+						position.x / viewport_size.x,
+						position.y / viewport_size.y
+					)
+					
+					coral.material.set_shader_parameter("light_position", light_pos_uv)
+					coral.material.set_shader_parameter("light_radius", radius)
+					coral.material.set_shader_parameter("light_intensity", intensity)
+					coral.material.set_shader_parameter("light_falloff", falloff)
+	
+	# This can stay if you also need to update a separate flashlight node
+	if get_node_or_null("/root/Main/Flashlight"):
+		var flashlight = get_node("/root/Main/Flashlight")
+		flashlight.toggle(is_on)
+		flashlight.update_position(position, get_viewport_rect().size)
+
+# Add a method to get all shader materials
+func get_shader_materials():
+	return layer_materials
+
+# Optional: Add a convenience method to add a flashlight controller
+func connect_to_flashlight(flashlight_node):
+	for material in layer_materials:
+		flashlight_node.add_shader(material)
+
+# Helper function to update shader position parameters for a coral sprite
+func update_coral_shader_params(coral: Sprite2D, layer_index: int):
+	if coral.material:
+		# Now we're using the coral's own unique material instance
+		coral.material.set_shader_parameter("sprite_world_position", coral.global_position)
+		coral.material.set_shader_parameter("sprite_size", coral.texture.get_size() * coral.scale)
+		coral.material.set_shader_parameter("screen_size", get_viewport_rect().size)
