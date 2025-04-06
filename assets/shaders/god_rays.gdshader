@@ -27,6 +27,11 @@ uniform vec4 color : source_color = vec4(1.0, 0.9, 0.65, 0.8);
 uniform bool hdr = false;
 uniform float seed = 5.0;
 
+uniform float dust_amount = 40.0; // Control number of particles
+uniform float dust_size : hint_range(0.001, 0.01) = 0.003; // Size of particles
+uniform float dust_speed = 0.2; // Speed of particle movement
+uniform vec4 dust_color : source_color = vec4(1.0, 0.9, 0.7, 1.0); // Color of dust particles
+
 // Random and noise functions from Book of Shader's chapter on Noise.
 float random(vec2 _uv) {
     return fract(sin(dot(_uv.xy,
@@ -63,6 +68,33 @@ mat2 rotate(float _angle){
 
 vec4 screen(vec4 base, vec4 blend){
 	return 1.0 - (1.0 - base) * (1.0 - blend);
+}
+
+// Add this function to generate dust particles
+float dust(vec2 uv) {
+    float result = 0.0;
+    
+    // Create multiple layers of dust with different densities
+    for (float i = 0.0; i < 3.0; i++) {
+        // Offset each layer for more variation
+        vec2 pos = uv * (dust_amount + i * 10.0);
+        
+        // Slowly animate the dust
+        pos.y += TIME * dust_speed * (1.0 + i * 0.5);
+        pos.x += sin(TIME * dust_speed * 0.3 * (i + 1.0)) * 2.0;
+        
+        // Create small dots
+        vec2 grid = fract(pos) - 0.5;
+        float dot_dist = length(grid);
+        
+        // Use random to determine which grid cells have particles
+        vec2 id = floor(pos);
+        if (random(id + seed + i) > 0.85) {
+            result += smoothstep(dust_size, 0.0, dot_dist);
+        }
+    }
+    
+    return result;
 }
 
 void fragment()
@@ -108,5 +140,14 @@ void fragment()
 	// With "Screen" blend mode:
 	shine = screen(texture(SCREEN_TEXTURE, SCREEN_UV), vec4(color)).rgb;
 	
-	COLOR = vec4(shine, rays * color.a);
+	// Generate dust particles
+	float dust_particles = dust(UV);
+	
+	// Make dust more visible in rays (multiply by rays intensity)
+	dust_particles *= smoothstep(0.1, 0.6, rays);
+	
+	// Add dust to the final color
+	shine += dust_particles * dust_color.rgb * color.a;
+	
+	COLOR = vec4(shine, rays * color.a + dust_particles * dust_color.a * 0.5);
 }

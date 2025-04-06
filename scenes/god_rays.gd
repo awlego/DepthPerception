@@ -3,12 +3,12 @@ extends ColorRect
 class_name GodRays
 
 # Export parameters for the new shader
-@export var ray_angle: float = 0.0
+@export var ray_angle: float = 0.2
 @export var ray_position: float = 0.0  # Renamed from 'position' to avoid conflict
-@export var spread: float = 0.5
+@export var spread: float = 0.8
 @export var cutoff: float = 0.1
 @export var falloff: float = 0.2
-@export var edge_fade: float = 0.15
+@export var edge_fade: float = 0.65
 @export var ray_speed: float = 1.0  # Renamed from 'speed' to match our naming convention
 @export var ray1_density: float = 8.0
 @export var ray2_density: float = 30.0

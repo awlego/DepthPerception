@@ -11,7 +11,7 @@ var fps_label: Label
 
 # Depth tracking
 var current_depth = 0.0  # Single source of truth for depth
-var depth_increase_rate: float = 1.0  # Units per second
+var depth_increase_rate: float = 0.2  # Units per second
 var max_depth: float = 1000.0  # Maximum depth
 
 # Shader
