@@ -1,12 +1,12 @@
 extends Node2D
 
 # Parallax layers
-var parallax_layers = []  # Will hold our 5 layers
-var layer_speeds = [0.96, 0.97, 0.98, 0.99, 1.0]  # Far -> close (multipliers)
-var layer_scale = [0.15, 0.20, 0.30, 0.40, 0.50]  # Smaller scales for farther layers
+var parallax_layers = []  # Will hold our 9 layers instead of 5
+var layer_speeds = [0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]  # Far -> close (multipliers)
+var layer_scale = [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]  # Smaller scales for farther layers
 var base_density = 3
 var layer_density = []  # Will be populated in _ready()
-var layer_z_indices = [-20, -15, -10, -5, 0]  # Far to close layers
+var layer_z_indices = [-40, -35, -30, -25, -20, -15, -10, -5, 0]  # Far to close layers
 
 # Coral wall properties
 var coral_textures = []  # Will hold all coral textures
@@ -45,7 +45,7 @@ func _ready():
 	# Load all rock textures
 	preload_rock_textures()
 	
-	# Create our five parallax layers
+	# Create our nine parallax layers
 	setup_parallax_layers()
 	
 	# Generate initial segments for each layer
@@ -93,8 +93,8 @@ func preload_rock_textures():
 
 # Setup the parallax layers
 func setup_parallax_layers():
-	# Create 5 layers - farthest to closest
-	for i in range(5):  # Changed from 3 to 5
+	# Create 9 layers - farthest to closest
+	for i in range(9):  # Changed from 5 to 9
 		var layer = {
 			"node": Node2D.new(),
 			"segments": [],
@@ -126,11 +126,12 @@ func generate_coral_segment(layer_index, vertical_position):
 	
 	# Calculate different spawn regions for each layer
 	var viewport_width = get_viewport_rect().size.x
-	var screen_mid = viewport_width / 2
+	var screen_start = viewport_width * 0.35  # Start at 35% of screen width instead of 50%
 	
-	# Divide the right half of the screen into equal bands for each layer
-	var band_width = screen_mid / parallax_layers.size()
-	var band_start = screen_mid + (layer_index * band_width)
+	# Divide the right portion of the screen into equal bands for each layer
+	var available_width = viewport_width - screen_start
+	var band_width = available_width / parallax_layers.size()
+	var band_start = screen_start + (layer_index * band_width)
 	var band_end = band_start + band_width
 	
 	# Scale density based on layer
@@ -188,7 +189,7 @@ func generate_coral_segment(layer_index, vertical_position):
 			unique_material.set_shader_parameter("sprite_size", coral.texture.get_size() * coral.scale)
 			unique_material.set_shader_parameter("screen_size", get_viewport_rect().size)
 			
-			print("Applied unique material to coral in layer", layer_index)
+			# print("Applied unique material to coral in layer", layer_index)
 		
 		# Add to segment
 		segment.add_child(coral)
@@ -252,11 +253,12 @@ func regenerate_segment_contents(layer_index, segment):
 	
 	# Calculate different spawn regions for each layer
 	var viewport_width = get_viewport_rect().size.x
-	var screen_mid = viewport_width / 2
+	var screen_start = viewport_width * 0.35  # Start at 35% of screen width instead of 50%
 	
-	# Divide the right half of the screen into equal bands for each layer
-	var band_width = screen_mid / parallax_layers.size()
-	var band_start = screen_mid + (layer_index * band_width)
+	# Divide the right portion of the screen into equal bands for each layer
+	var available_width = viewport_width - screen_start
+	var band_width = available_width / parallax_layers.size()
+	var band_start = screen_start + (layer_index * band_width)
 	var band_end = band_start + band_width
 	
 	# Scale density based on layer
@@ -317,7 +319,7 @@ func regenerate_segment_contents(layer_index, segment):
 			unique_material.set_shader_parameter("sprite_size", coral.texture.get_size() * coral.scale)
 			unique_material.set_shader_parameter("screen_size", get_viewport_rect().size)
 			
-			print("Applied unique material to regenerated coral in layer", layer_index)
+			# print("Applied unique material to regenerated coral in layer", layer_index)
 		
 		segment.add_child(coral)
 		update_coral_shader_params(coral)
@@ -351,28 +353,44 @@ func create_layer_shaders():
 		return  # Exit the function if shader isn't found
 	
 	# Create shader materials for each layer with different parameter sets
-	for i in range(5):  # Changed from 3 to 5
+	for i in range(9):  # Changed from 5 to 9
 		var material = ShaderMaterial.new()
 		material.shader = coral_shader
 		
-		# Configure parameters based on layer with more gradual transitions
+		# Configure parameters based on layer with manual distance settings
 		if i == 0:  # Furthest layer
 			material.set_shader_parameter("distance", 150.0)
 			material.set_shader_parameter("wave_strength", 0.001)
 			material.set_shader_parameter("wave_speed", 0.2)
-		elif i == 1:  # Far layer
+		elif i == 1:
 			material.set_shader_parameter("distance", 50.0)
+			material.set_shader_parameter("wave_strength", 0.0012)
+			material.set_shader_parameter("wave_speed", 0.25)
+		elif i == 2:
+			material.set_shader_parameter("distance", 30.0)
 			material.set_shader_parameter("wave_strength", 0.0015)
 			material.set_shader_parameter("wave_speed", 0.3)
-		elif i == 2:  # Mid layer
-			material.set_shader_parameter("distance", 6.0)
+		elif i == 3:
+			material.set_shader_parameter("distance", 22.0)
+			material.set_shader_parameter("wave_strength", 0.0018)
+			material.set_shader_parameter("wave_speed", 0.35)
+		elif i == 4:  # Mid layer
+			material.set_shader_parameter("distance", 15.0)
 			material.set_shader_parameter("wave_strength", 0.002)
 			material.set_shader_parameter("wave_speed", 0.4)
-		elif i == 3:  # Near layer
-			material.set_shader_parameter("distance", 3.0)
+		elif i == 5:
+			material.set_shader_parameter("distance", 10.0)
+			material.set_shader_parameter("wave_strength", 0.0025)
+			material.set_shader_parameter("wave_speed", 0.5)
+		elif i == 6:
+			material.set_shader_parameter("distance", 6.0)
 			material.set_shader_parameter("wave_strength", 0.003)
 			material.set_shader_parameter("wave_speed", 0.6)
-		else:  # Closest layer
+		elif i == 7:
+			material.set_shader_parameter("distance", 3.0)
+			material.set_shader_parameter("wave_strength", 0.0035)
+			material.set_shader_parameter("wave_speed", 0.7)
+		else:  # Closest layer (i == 8)
 			material.set_shader_parameter("distance", 0.0)
 			material.set_shader_parameter("wave_strength", 0.004)
 			material.set_shader_parameter("wave_speed", 0.8)
