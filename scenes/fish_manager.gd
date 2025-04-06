@@ -66,7 +66,9 @@ func load_fish_database():
 	add_fish_entry(fish_entries, "res://assets/fish/fish3.png", "Yellow Tang", 0.15, Vector2(0, 80), "res://assets/sounds/fish_bubble2.mp3", 0.9, false, "normal", 5, Vector2(-15, 15))
 	add_fish_entry(fish_entries, "res://assets/fish/fish4.png", "Moorish Idol", 0.14, Vector2(10, 100), "res://assets/sounds/fish_bubble2.mp3", 0.8, false, "normal", 2, Vector2(-15, 15))
 	add_fish_entry(fish_entries, "res://assets/fish/fish5.png", "Butterflyfish", 0.13, Vector2(0, 90), "res://assets/sounds/fish_bubble1.mp3", 0.9, false, "normal", 3, Vector2(-15, 15))
-	
+	add_fish_entry(fish_entries, "res://assets/fish/fish16.png", "TrumpetFish", 0.12, Vector2(0, 100), "res://assets/sounds/fish_bubble1.mp3", 0.8, false, "normal", 2, Vector2(-15, 15))
+	add_fish_entry(fish_entries, "res://assets/fish/shark15foot.png", "Nurse Shark", 1.0, Vector2(0, 80), "res://assets/sounds/shark1.mp3", 0.7, false, "normal", 3, Vector2(-15, 15))
+
 	# Mid-water fish
 	add_fish_entry(fish_entries, "res://assets/fish/fish6.png", "Parrotfish", 0.20, Vector2(50, 150), "res://assets/sounds/fish_medium1.mp3", 0.8, false, "normal", 1, Vector2(0, 10))
 	add_fish_entry(fish_entries, "res://assets/fish/fish7.png", "Angelfish", 0.18, Vector2(40, 140), "res://assets/sounds/fish_medium2.mp3", 0.7, false, "normal", 2, Vector2(0, 10))
