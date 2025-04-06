@@ -13,6 +13,8 @@ var coral_textures = []  # Will hold all coral textures
 var segment_height = 1024  # Height of each segment in pixels
 var num_visible_segments = 3  # How many segments to keep active at once
 
+var rock_textures = []
+
 # Parallax properties
 var scroll_speed = 100.0  # Base scroll speed
 var current_depth = 0.0  # Will be updated from main
@@ -39,6 +41,9 @@ func _ready():
 	
 	# Load all coral textures
 	preload_coral_textures()
+	
+	# Load all rock textures
+	preload_rock_textures()
 	
 	# Create our five parallax layers
 	setup_parallax_layers()
@@ -69,12 +74,22 @@ func preload_coral_textures():
 		preload("res://assets/background-objs/coral12.png"),
 		preload("res://assets/background-objs/coral13.png"),
 		preload("res://assets/background-objs/coral14.png"),
-		
+		preload("res://assets/background-objs/kelp1.png"),
+		preload("res://assets/background-objs/kelp2.png"),
 		# Add more coral textures as needed
 	]
 	
 	# Create shader materials for each layer
 	create_layer_shaders()
+
+func preload_rock_textures():
+	rock_textures = [
+		preload("res://assets/background-objs/rock2.png"),
+		preload("res://assets/background-objs/rock3.png"),
+		preload("res://assets/background-objs/rock4.png"),
+		preload("res://assets/background-objs/rock5.png"),
+		preload("res://assets/background-objs/rock6.png"),
+	]
 
 # Setup the parallax layers
 func setup_parallax_layers():
@@ -124,9 +139,20 @@ func generate_coral_segment(layer_index, vertical_position):
 	for i in range(segment_density):
 		var coral = Sprite2D.new()
 		
-		# Select random coral texture appropriate for the depth
-		var texture_index = randi() % coral_textures.size()
-		coral.texture = coral_textures[texture_index]
+		# Determine if this will be a rock or coral
+		var is_rock = layer_index <= 2 and rock_textures.size() > 0 and randf() > 0.4
+		
+		# Select texture based on layer - rocks for far layers (0, 1, 2), coral for near layers (3, 4)
+		var texture_index
+		if is_rock:  # 60% chance of rocks in far layers
+			texture_index = randi() % rock_textures.size()
+			coral.texture = rock_textures[texture_index]
+			# Set rocks to be behind other elements in their layer
+			coral.z_index = -5
+		else:
+			texture_index = randi() % coral_textures.size()
+			coral.texture = coral_textures[texture_index]
+			coral.z_index = 0  # Default z_index for corals
 		
 		# Random position within the segment - LAYER-SPECIFIC BAND
 		coral.position = Vector2(
@@ -138,6 +164,11 @@ func generate_coral_segment(layer_index, vertical_position):
 		var base_scale = layer["scale"]
 		var variation = randf_range(0.8, 1.2)  # Some variation within layer
 		var scale_factor = base_scale * variation
+		
+		# Make rocks twice as big
+		if is_rock:
+			scale_factor *= 2.0
+			
 		coral.scale = Vector2(scale_factor, scale_factor)
 		
 		# Opacity based on layer (more transparent for far objects)
@@ -234,9 +265,20 @@ func regenerate_segment_contents(layer_index, segment):
 	for i in range(segment_density):
 		var coral = Sprite2D.new()
 		
-		# Select appropriate coral texture for current depth
-		var texture_index = randi() % coral_textures.size()
-		coral.texture = coral_textures[texture_index]
+		# Determine if this will be a rock or coral
+		var is_rock = layer_index <= 2 and rock_textures.size() > 0 and randf() > 0.4
+		
+		# Select texture based on layer - rocks for far layers (0, 1, 2), coral for near layers (3, 4)
+		var texture_index
+		if is_rock:  # 60% chance of rocks in far layers
+			texture_index = randi() % rock_textures.size()
+			coral.texture = rock_textures[texture_index]
+			# Set rocks to be behind other elements in their layer
+			coral.z_index = -5
+		else:
+			texture_index = randi() % coral_textures.size()
+			coral.texture = coral_textures[texture_index]
+			coral.z_index = 0  # Default z_index for corals
 		
 		# Random position within the segment - LAYER-SPECIFIC BAND
 		coral.position = Vector2(
@@ -248,6 +290,11 @@ func regenerate_segment_contents(layer_index, segment):
 		var base_scale = layer["scale"]
 		var variation = randf_range(0.8, 1.2)  # Some variation within layer
 		var scale_factor = base_scale * variation
+		
+		# Make rocks twice as big
+		if is_rock:
+			scale_factor *= 2.0
+			
 		coral.scale = Vector2(scale_factor, scale_factor)
 		
 		# Opacity based on layer (more transparent for far objects)
@@ -310,19 +357,19 @@ func create_layer_shaders():
 		
 		# Configure parameters based on layer with more gradual transitions
 		if i == 0:  # Furthest layer
-			material.set_shader_parameter("distance", 40.0)
+			material.set_shader_parameter("distance", 150.0)
 			material.set_shader_parameter("wave_strength", 0.001)
 			material.set_shader_parameter("wave_speed", 0.2)
 		elif i == 1:  # Far layer
-			material.set_shader_parameter("distance", 30.0)
+			material.set_shader_parameter("distance", 50.0)
 			material.set_shader_parameter("wave_strength", 0.0015)
 			material.set_shader_parameter("wave_speed", 0.3)
 		elif i == 2:  # Mid layer
-			material.set_shader_parameter("distance", 15.0)
+			material.set_shader_parameter("distance", 6.0)
 			material.set_shader_parameter("wave_strength", 0.002)
 			material.set_shader_parameter("wave_speed", 0.4)
 		elif i == 3:  # Near layer
-			material.set_shader_parameter("distance", 5.0)
+			material.set_shader_parameter("distance", 3.0)
 			material.set_shader_parameter("wave_strength", 0.003)
 			material.set_shader_parameter("wave_speed", 0.6)
 		else:  # Closest layer
