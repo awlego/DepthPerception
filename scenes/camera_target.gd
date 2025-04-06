@@ -85,6 +85,45 @@ func update_fully_contained_fish():
 			if camera_rect.encloses(fish_rect):
 				fully_contained_fish.append(fish)
 
+# Calculate the % of the viewfinder that is covered by a specific fish
+# Returns a value between 0.0 and 100.0
+func calculate_viewfinder_coverage(fish):
+	# Skip if fish isn't visible
+	if not fish.visible or not fish.is_active:
+		return 0.0
+		
+	# Get fish sprite
+	var fish_sprite = fish.get_node_or_null("Sprite2D")
+	if not fish_sprite or not fish_sprite.texture:
+		return 0.0
+	
+	# Get viewfinder rect in global coordinates
+	var viewfinder_rect = Rect2(
+		global_position - rect_size / 2,
+		rect_size
+	)
+	
+	# Calculate total viewfinder area
+	var viewfinder_area = rect_size.x * rect_size.y
+	
+	# Calculate the fish's global rect (accounting for scale)
+	var fish_size = fish_sprite.texture.get_size() * fish_sprite.scale
+	var fish_rect = Rect2(
+		fish.global_position - fish_size / 2,
+		fish_size
+	)
+	
+	# Calculate intersection with viewfinder
+	var intersection = viewfinder_rect.intersection(fish_rect)
+	
+	# If there's no intersection, return 0
+	if not intersection.has_area():
+		return 0.0
+		
+	# Calculate percentage (clamped between 0-100%)
+	var coverage_percentage = (intersection.get_area() / viewfinder_area) * 100.0
+	return clamp(coverage_percentage, 0.0, 100.0)
+
 # Get current count of fish in viewfinder
 func get_fish_count():
 	return fish_in_viewfinder.size()
@@ -102,6 +141,16 @@ func is_fish_in_viewfinder(fish):
 func is_fish_fully_in_viewfinder(fish):
 	update_fully_contained_fish()
 	return fish in fully_contained_fish
+
+# Check if a fish is a valid target (either fully contained or covers most of viewfinder)
+func is_valid_fish_capture(fish):
+	# First check if fish is fully in viewfinder
+	if is_fish_fully_in_viewfinder(fish):
+		return true
+		
+	# If not fully contained, check if it covers most of the viewfinder
+	var coverage = calculate_viewfinder_coverage(fish)
+	return coverage >= 90.0  # 90% coverage threshold
 
 # Custom drawing function to draw the rectangle outline
 func _draw():

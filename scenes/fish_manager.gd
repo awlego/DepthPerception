@@ -17,6 +17,9 @@ var fish_scene = preload("res://scenes/fish.tscn")  # Assuming you saved the Fis
 var player_node: Node2D
 var spawn_timer: Timer
 
+# Current depth zone tracking
+var current_depth_zone = "" 
+
 func _ready():
 	# Initialize fish database
 	load_fish_database()
@@ -28,6 +31,9 @@ func _ready():
 	spawn_timer.autostart = true
 	add_child(spawn_timer)
 	spawn_timer.connect("timeout", spawn_fish)
+	
+	# Ensure at least one of each fish species in the current zone is spawned
+	ensure_all_zone_species_spawned()
 	
 	# Find player node (assuming it exists in the scene)
 	player_node = get_node_or_null("/root/Main/Player")
@@ -61,7 +67,7 @@ func load_fish_database():
 	add_fish_entry(fish_entries, "res://assets/fish/fish15.png", "Mahi-Mahi", 0.27, Vector2(120, 280), "res://assets/sounds/fish_deep1.mp3", 0.55, false, "normal", 1)
 	
 	# Special creatures
-	add_fish_entry(fish_entries, "res://assets/fish/jellyfish1.png", "Jellyfish", 0.23, Vector2(30, 400), "res://assets/sounds/jellyfish.mp3", 0.6, true, "slow", 2)
+	add_fish_entry(fish_entries, "res://assets/fish/jellyfish1.png", "Jellyfish", 0.23, Vector2(0, 400), "res://assets/sounds/jellyfish.mp3", 0.6, true, "slow", 2)
 	add_fish_entry(fish_entries, "res://assets/fish/angler2.png", "Small Anglerfish", 0.25, Vector2(350, 600), "res://assets/sounds/angler.mp3", 0.3, true, "erratic", 1)
 	add_fish_entry(fish_entries, "res://assets/fish/anglerfish.png", "Anglerfish", 0.35, Vector2(400, 800), "res://assets/sounds/angler.mp3", 0.2, true, "erratic", 1)
 	add_fish_entry(fish_entries, "res://assets/fish/angler3.png", "Deep Anglerfish", 0.4, Vector2(600, 1000), "res://assets/sounds/angler.mp3", 0.15, true, "erratic", 1)
@@ -176,8 +182,18 @@ func spawn_fish():
 				# Explicitly update sprite orientation after setting velocity
 				fish_instance.update_sprite_orientation()
 
-# Update function - renamed to match coral wall naming
+# Update function with zone transition check
 func update_depth(new_depth):
+	# Check if we've entered a new depth zone
+	var previous_zone = current_depth_zone
+	current_depth_zone = get_depth_zone_name(new_depth)
+	
+	# If we've entered a new zone, spawn all species from this zone
+	if previous_zone != current_depth_zone:
+		print("Entered new depth zone: " + current_depth_zone)
+		ensure_all_zone_species_spawned()
+	
+	# Update depth value
 	current_depth = new_depth
 	
 	# Update all existing fish based on the new depth
@@ -217,3 +233,72 @@ func _process(delta):
 			active_fish.remove_at(i)
 		else:
 			i += 1 
+
+# New function to ensure one of each species in the current zone is spawned
+func ensure_all_zone_species_spawned():
+	# Get all fish types that can exist at the current depth
+	var fish_in_current_zone = []
+	
+	for fish_data in fish_database:
+		if current_depth >= fish_data.depth_range.x and current_depth <= fish_data.depth_range.y:
+			fish_in_current_zone.append(fish_data)
+	
+	print("Found " + str(fish_in_current_zone.size()) + " fish species in current depth zone")
+	
+	# Spawn one of each species
+	for fish_data in fish_in_current_zone:
+		# Skip if we've reached max fish count
+		if active_fish.size() >= max_fish:
+			print("Warning: Max fish limit reached while ensuring zone species")
+			break
+			
+		# Check if texture exists before spawning
+		if !ResourceLoader.exists(fish_data.texture_path):
+			print("Warning: Fish texture not found: " + fish_data.texture_path)
+			continue
+		
+		# Spawn just one of this species (not the whole school)
+		var fish_instance = fish_scene.instantiate()
+		if not fish_instance:
+			print("Error instantiating fish scene")
+			continue
+			
+		# Apply fish data
+		fish_instance.texture_path = fish_data.texture_path
+		fish_instance.scale_factor = fish_data.scale_factor
+		fish_instance.depth_range = fish_data.depth_range
+		fish_instance.sound_path = fish_data.sound_path if "sound_path" in fish_data else ""
+		fish_instance.rarity = fish_data.rarity if "rarity" in fish_data else 1.0
+		fish_instance.is_dangerous = fish_data.is_dangerous if "is_dangerous" in fish_data else false
+		fish_instance.swim_style = fish_data.swim_style if "swim_style" in fish_data else "normal"
+		fish_instance.fish_name = fish_data.fish_name if "fish_name" in fish_data else "Fish"
+		
+		# Position in a visible but random position on screen
+		var screen_size = get_viewport_rect().size
+		var margin = 100
+		
+		fish_instance.position = Vector2(
+			randf_range(margin, screen_size.x - margin),
+			randf_range(margin, screen_size.y - margin)
+		)
+		
+		# Add to scene
+		add_child(fish_instance)
+		active_fish.append(fish_instance)
+		
+		# Set depth immediately
+		fish_instance.set_depth(current_depth)
+		fish_instance.update_sprite_orientation()
+		
+		print("Spawned " + fish_instance.fish_name + " for zone completion") 
+
+# Helper function to determine the depth zone name based on depth
+func get_depth_zone_name(depth):
+	if depth < 50:
+		return "shallow"
+	elif depth < 150:
+		return "mid"
+	elif depth < 300:
+		return "deep"
+	else:
+		return "abyss"

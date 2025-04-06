@@ -335,15 +335,20 @@ func take_photo():
 	# Always create a flash effect for any photo
 	create_flash_effect()
 	
-	# Check if any fish are FULLY in the viewfinder for successful capture
-	var fully_contained_fish = []
+	# Check if any fish are FULLY in the viewfinder for successful capture 
+	# OR if the viewfinder is covered by a target fish by more than 90%
+	var captured_fish = []
 	
-	# Get all fish in the scene and check if they're in viewfinder
+	# Get all fish in the scene and check if they're captured
 	var fish_in_scene = get_tree().get_nodes_in_group("fish")
 	for fish in fish_in_scene:
-		if camera_target.is_fish_fully_in_viewfinder(fish):
+		if camera_target.is_valid_fish_capture(fish):
 			if fish.texture_path:
-				fully_contained_fish.append(fish.texture_path)
+				captured_fish.append(fish.texture_path)
+				
+				# Optional: Add some visual feedback for which fish was captured
+				print("Captured fish: " + fish.fish_name + " - Coverage: " + 
+					  str(int(camera_target.calculate_viewfinder_coverage(fish))) + "%")
 	
 	# Get the current target fish
 	var current_target = null
@@ -351,7 +356,7 @@ func take_photo():
 		current_target = target_queue.fish_queue[target_queue.current_target_index]
 	
 	# Check if we captured the specific target fish
-	if current_target and current_target in fully_contained_fish:
+	if current_target and current_target in captured_fish:
 		# Success! We captured the exact target fish
 		camera_target.rect_color = success_camera_color
 		camera_target.queue_redraw()
