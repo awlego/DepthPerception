@@ -4,7 +4,7 @@ extends Node2D
 var parallax_layers = []  # Will hold our 5 layers
 var layer_speeds = [0.96, 0.97, 0.98, 0.99, 1.0]  # Far -> close (multipliers)
 var layer_scale = [0.15, 0.20, 0.30, 0.40, 0.50]  # Smaller scales for farther layers
-var base_density = 6
+var base_density = 3
 var layer_density = []  # Will be populated in _ready()
 var layer_z_indices = [-20, -15, -10, -5, 0]  # Far to close layers
 
@@ -59,6 +59,17 @@ func preload_coral_textures():
 		preload("res://assets/background-objs/coral2.png"),
 		preload("res://assets/background-objs/coral3.png"),
 		preload("res://assets/background-objs/coral4.png"),
+		preload("res://assets/background-objs/coral5.png"),
+		preload("res://assets/background-objs/coral6.png"),
+		preload("res://assets/background-objs/coral7.png"),
+		preload("res://assets/background-objs/coral8.png"),
+		preload("res://assets/background-objs/coral9.png"),
+		preload("res://assets/background-objs/coral10.png"),
+		preload("res://assets/background-objs/coral11.png"),
+		preload("res://assets/background-objs/coral12.png"),
+		preload("res://assets/background-objs/coral13.png"),
+		preload("res://assets/background-objs/coral14.png"),
+		
 		# Add more coral textures as needed
 	]
 	
@@ -299,15 +310,15 @@ func create_layer_shaders():
 		
 		# Configure parameters based on layer with more gradual transitions
 		if i == 0:  # Furthest layer
-			material.set_shader_parameter("distance", 20.0)
+			material.set_shader_parameter("distance", 40.0)
 			material.set_shader_parameter("wave_strength", 0.001)
 			material.set_shader_parameter("wave_speed", 0.2)
 		elif i == 1:  # Far layer
-			material.set_shader_parameter("distance", 15.0)
+			material.set_shader_parameter("distance", 30.0)
 			material.set_shader_parameter("wave_strength", 0.0015)
 			material.set_shader_parameter("wave_speed", 0.3)
 		elif i == 2:  # Mid layer
-			material.set_shader_parameter("distance", 10.0)
+			material.set_shader_parameter("distance", 15.0)
 			material.set_shader_parameter("wave_strength", 0.002)
 			material.set_shader_parameter("wave_speed", 0.4)
 		elif i == 3:  # Near layer
