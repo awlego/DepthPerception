@@ -150,21 +150,45 @@ func setup_camera_sound():
 	camera_sound = AudioStreamPlayer.new()
 	camera_sound.stream = load("res://assets/sounds/camera-shutter-1.mp3")
 	camera_sound.volume_db = 0  # Normal volume
+	
+	# Make sure the SFX bus exists before assigning it
+	if AudioServer.get_bus_index("SFX") == -1:
+		# Create the SFX bus if it doesn't exist
+		AudioServer.add_bus()
+		AudioServer.set_bus_name(AudioServer.bus_count - 1, "SFX")
+	
+	# Now set the bus
 	camera_sound.bus = "SFX"  # Assign to SFX bus
+	
 	add_child(camera_sound)
+	
+	# Test the sound when initialized (Optional - comment out if not needed)
+	# camera_sound.play()
+	# print("Camera sound initialized on bus: ", camera_sound.bus)
 
 # Setup the background music
 func setup_background_music():
 	background_music = AudioStreamPlayer.new()
 	background_music.stream = load("res://assets/music/Silent Reverie2.mp3")
 	background_music.volume_db = -5  # Slightly quieter than effects
-	background_music.autoplay = true
+	
+	# Make sure the Music bus exists before assigning it
+	if AudioServer.get_bus_index("Music") == -1:
+		# Create the Music bus if it doesn't exist
+		AudioServer.add_bus()
+		AudioServer.set_bus_name(AudioServer.bus_count - 1, "Music")
+	
+	# Now set the bus
 	background_music.bus = "Music"  # Assign to Music bus
 	
 	# Set up looping by connecting to the finished signal
 	background_music.finished.connect(func(): background_music.play())
 	
 	add_child(background_music)
+	background_music.play()  # Start playing
+	
+	# Debug
+	# print("Music initialized on bus: ", background_music.bus)
 
 # Create the camera target/viewfinder
 func create_camera_target():
@@ -387,7 +411,18 @@ func take_photo():
 		
 	# Play camera shutter sound
 	if camera_sound:
+		# Debug message to check if sound plays
+		print("Playing camera sound")
 		camera_sound.play()
+		
+		# If sound doesn't play, try to diagnose
+		if !camera_sound.playing:
+			print("WARNING: Camera sound failed to play.")
+			print("Camera sound bus:", camera_sound.bus)
+			print("SFX bus index:", AudioServer.get_bus_index("SFX"))
+			print("SFX bus muted:", AudioServer.is_bus_mute(AudioServer.get_bus_index("SFX")))
+			print("SFX bus volume:", AudioServer.get_bus_volume_db(AudioServer.get_bus_index("SFX")))
+			print("Master bus muted:", AudioServer.is_bus_mute(AudioServer.get_bus_index("Master")))
 	
 	# Always create a flash effect for any photo
 	create_flash_effect()

@@ -25,46 +25,64 @@ func setup_volume_sliders():
 	var music_slider = $Panel/VBoxContainer/MusicVolume
 	var sfx_slider = $Panel/VBoxContainer/SoundEffectsVolume
 	
-	# Get audio bus indices
+	# Ensure all audio buses exist
 	var master_bus_idx = AudioServer.get_bus_index("Master")
+	
+	# Create Music bus if it doesn't exist
 	var music_bus_idx = AudioServer.get_bus_index("Music")
-	var sfx_bus_idx = AudioServer.get_bus_index("SFX")
-	
-	# If Music bus doesn't exist, create it
 	if music_bus_idx == -1:
-		AudioServer.add_bus(1)  # Add at position 1 (after Master)
-		AudioServer.set_bus_name(1, "Music")
-		music_bus_idx = 1
+		AudioServer.add_bus()
+		music_bus_idx = AudioServer.bus_count - 1
+		AudioServer.set_bus_name(music_bus_idx, "Music")
+		# Make sure Music sends to Master
+		AudioServer.set_bus_send(music_bus_idx, "Master")
+		print("Created Music bus at index", music_bus_idx)
 	
-	# If SFX bus doesn't exist, create it
+	# Create SFX bus if it doesn't exist
+	var sfx_bus_idx = AudioServer.get_bus_index("SFX")
 	if sfx_bus_idx == -1:
-		AudioServer.add_bus(2)  # Add at position 2 (after Music)
-		AudioServer.set_bus_name(2, "SFX")
-		sfx_bus_idx = 2
+		AudioServer.add_bus()
+		sfx_bus_idx = AudioServer.bus_count - 1
+		AudioServer.set_bus_name(sfx_bus_idx, "SFX")
+		# Make sure SFX sends to Master
+		AudioServer.set_bus_send(sfx_bus_idx, "Master")
+		print("Created SFX bus at index", sfx_bus_idx)
+	
+	# Initialize bus volumes if they're at defaults
+	if AudioServer.get_bus_volume_db(music_bus_idx) <= -80:
+		AudioServer.set_bus_volume_db(music_bus_idx, -5)  # Default music to slightly lower
+	
+	if AudioServer.get_bus_volume_db(sfx_bus_idx) <= -80:
+		AudioServer.set_bus_volume_db(sfx_bus_idx, 0)  # Default SFX to normal volume
 	
 	# Store initial volumes in decibels
 	initial_master_volume = AudioServer.get_bus_volume_db(master_bus_idx)
 	initial_music_volume = AudioServer.get_bus_volume_db(music_bus_idx)
 	initial_sfx_volume = AudioServer.get_bus_volume_db(sfx_bus_idx)
 	
-	# Setup slider ranges
-	# From -80 dB (nearly silent) to 0 dB (full volume)
-	master_slider.min_value = -80
+	# Setup slider ranges and values
+	master_slider.min_value = -40  # Changed from -80 to be more user-friendly
 	master_slider.max_value = 0
-	music_slider.min_value = -80
-	music_slider.max_value = 0
-	sfx_slider.min_value = -80
-	sfx_slider.max_value = 0
-	
-	# Set initial slider values
 	master_slider.value = initial_master_volume
+	
+	music_slider.min_value = -40
+	music_slider.max_value = 0
 	music_slider.value = initial_music_volume
+	
+	sfx_slider.min_value = -40
+	sfx_slider.max_value = 0
 	sfx_slider.value = initial_sfx_volume
 	
-	# Connect value changed signals
+	# Connect signals
 	master_slider.value_changed.connect(_on_master_volume_changed)
 	music_slider.value_changed.connect(_on_music_volume_changed)
 	sfx_slider.value_changed.connect(_on_sfx_volume_changed)
+	
+	# Print debug info
+	print("Audio bus setup complete:")
+	print("- Master bus: ", master_bus_idx, " Volume: ", AudioServer.get_bus_volume_db(master_bus_idx))
+	print("- Music bus: ", music_bus_idx, " Volume: ", AudioServer.get_bus_volume_db(music_bus_idx))
+	print("- SFX bus: ", sfx_bus_idx, " Volume: ", AudioServer.get_bus_volume_db(sfx_bus_idx))
 
 func _on_master_volume_changed(value):
 	var master_bus_idx = AudioServer.get_bus_index("Master")
