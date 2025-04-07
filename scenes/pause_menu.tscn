@@ -1,24 +1,55 @@
-[gd_scene load_steps=2 format=3 uid="uid://dwiipffoikgth"]
+[gd_scene load_steps=3 format=3 uid="uid://dwiipffoikgth"]
 
 [ext_resource type="Script" uid="uid://b8utwtsq3d852" path="res://scenes/pause_menu.gd" id="1_n87rw"]
+[ext_resource type="Texture2D" uid="uid://dp17a3ijyrya8" path="res://assets/ui/Free Paper UI System/1 Sprites/Paper UI Pack/Paper UI/Folding & Cutout/10 Calander/1.png" id="2_myx47"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 script = ExtResource("1_n87rw")
 
 [node name="Panel" type="Panel" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 889.0
+offset_top = 483.0
+offset_right = 1053.0
+offset_bottom = 630.0
+
+[node name="TextureRect" type="TextureRect" parent="Panel"]
+layout_mode = 0
+offset_left = -327.0
+offset_top = -250.0
+offset_right = 329.0
+offset_bottom = 294.0
+texture = ExtResource("2_myx47")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -361.0
+offset_top = -133.5
+offset_right = 202.0
+offset_bottom = 173.5
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Title" type="Label" parent="Panel/VBoxContainer"]
 layout_mode = 2
 
 [node name="ResumeButton" type="Button" parent="Panel/VBoxContainer"]
 layout_mode = 2
+text = "Resume"
 
 [node name="QuitButton" type="Button" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Quit"
+
+[node name="MasterVolume" type="HSlider" parent="Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="MusicVolume" type="HSlider" parent="Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="SoundEffectsVolume" type="HSlider" parent="Panel/VBoxContainer"]
 layout_mode = 2

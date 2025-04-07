@@ -149,35 +149,22 @@ func _notification(what):
 func setup_camera_sound():
 	camera_sound = AudioStreamPlayer.new()
 	camera_sound.stream = load("res://assets/sounds/camera-shutter-1.mp3")
-	camera_sound.volume_db = 0  # Normal volume, adjust as needed
-	
-	# For one-shot sounds like camera shutter, we don't need looping
-	# camera_sound.stream.loop = false  # MP3 files don't have loop property in Godot 4
-	
+	camera_sound.volume_db = 0  # Normal volume
+	camera_sound.bus = "SFX"  # Assign to SFX bus
 	add_child(camera_sound)
 
-# Setup the background music with looping
+# Setup the background music
 func setup_background_music():
-	background_music = create_looping_audio(
-		"res://assets/music/Silent Reverie2.mp3", 
-		-5,  # Volume
-		"Music",  # Bus
-		true  # Autoplay
-	)
-
-	background_sea_sounds1 = create_looping_audio(
-	 	"res://assets/sounds/underwater-loop-amb-6182.mp3", 
-	 	-10,  # Volume
-	 	"SoundEffects",  # Bus
-	 	false
-	)
-
-	background_sea_sounds2 = create_looping_audio(
-		"res://assets/sounds/underwater-19568.mp3", 
-		-15,  # Volume
-		"SoundEffects",  # Bus
-		true  # Autoplay
-	)
+	background_music = AudioStreamPlayer.new()
+	background_music.stream = load("res://assets/music/Silent Reverie2.mp3")
+	background_music.volume_db = -5  # Slightly quieter than effects
+	background_music.autoplay = true
+	background_music.bus = "Music"  # Assign to Music bus
+	
+	# Set up looping by connecting to the finished signal
+	background_music.finished.connect(func(): background_music.play())
+	
+	add_child(background_music)
 
 # Create the camera target/viewfinder
 func create_camera_target():
@@ -719,6 +706,7 @@ func initialize_pause_menu():
 func _on_resume_game():
 	is_paused = false
 	game_active = true
+	# Hide cursor when game resumes
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
 func _on_quit_game():
@@ -732,8 +720,11 @@ func toggle_pause():
 		# Pause game
 		game_active = false
 		pause_menu.show_menu()
+		# Mouse cursor is made visible in the show_menu() function
 	else:
 		# Resume game
 		game_active = true
 		pause_menu.hide_menu()
-		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+		# Hide cursor again when resuming
+		if game_active:  # Only hide if game is active (not in start menu)
+			Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
