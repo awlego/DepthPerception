@@ -25,6 +25,10 @@ var shader_rect: ColorRect
 var camera_sound: AudioStreamPlayer
 var background_music: AudioStreamPlayer
 var background_sea_sounds1: AudioStreamPlayer
+var background_sea_sounds2: AudioStreamPlayer
+var background_sea_sounds3: AudioStreamPlayer
+
+
 # Camera color settings
 var default_camera_color = Color(1, 1, 1, 1)  # White (default)
 var success_camera_color = Color(0, 1, 0, 1)  # Green (successful capture)
@@ -154,12 +158,19 @@ func setup_background_music():
 		true  # Autoplay
 	)
 
-	background_sea_sounds1 = AudioStreamPlayer.new()
-	background_sea_sounds1.stream = load("res://assets/sounds/underwater-loop-amb-6182.mp3")
-	background_sea_sounds1.volume_db = -10
-	background_sea_sounds1.autoplay = true
-	background_sea_sounds1.bus = "SoundEffects"
-	add_child(background_sea_sounds1)
+	background_sea_sounds1 = create_looping_audio(
+	 	"res://assets/sounds/underwater-loop-amb-6182.mp3", 
+	 	-10,  # Volume
+	 	"SoundEffects",  # Bus
+	 	false
+	)
+
+	background_sea_sounds2 = create_looping_audio(
+		"res://assets/sounds/underwater-19568.mp3", 
+		-15,  # Volume
+		"SoundEffects",  # Bus
+		true  # Autoplay
+	)
 
 # Create the camera target/viewfinder
 func create_camera_target():
@@ -235,7 +246,7 @@ func create_target_queue():
 		
 		# Update the score label
 		if score_label:
-			score_label.text = "Fish photographed: 0/" + str(total_targets)
+			score_label.text = "Species Found: 0/" + str(total_targets)
 	else:
 		# No fish available, show an error or default message
 		print("Warning: No fish available in current depth range")
@@ -260,24 +271,56 @@ func create_ui():
 	ui_layer.layer = 11  # Higher than the shader layer (10)
 	add_child(ui_layer)
 	
+	# Get a reference to your texture rect (assuming it's added to the scene and named "UITextureRect")
+	var ui_texture_rect = get_node_or_null("UITextureRect")
+	
+	# If the texture rect doesn't exist in the main scene, create a fallback positioning
+	var label_position_x = 20
+	var score_position_y = 20
+	var depth_position_y = 50
+	var fps_position_y = 80
+	
+	# If we found the texture rect, use its position for the labels
+	if ui_texture_rect:
+		# Position will be relative to the texture rect
+		label_position_x = 55 # Padding from the left edge of texture
+		score_position_y = 90  # Padding from the top for score
+		depth_position_y = 115  # Position for depth label
+		fps_position_y = 140    # Position for FPS label
+		
+		# Reparent the texture rect to the UI layer if it's not already there
+		if ui_texture_rect.get_parent() != ui_layer:
+			ui_texture_rect.get_parent().remove_child(ui_texture_rect)
+			ui_layer.add_child(ui_texture_rect)
+	
 	# Create a label to show captured fish count
 	score_label = Label.new()
-	score_label.text = "Fish photographed: 0/" + str(total_targets)
-	score_label.position = Vector2(20, 20)
-	ui_layer.add_child(score_label)  # Add to UI layer instead of root
+	score_label.text = "Species Found: 0/" + str(total_targets)
+	score_label.position = Vector2(label_position_x, score_position_y)
+	score_label.add_theme_color_override("font_color", Color(0, 0, 0))  # Black text
 	
 	# Create a label to show current depth
 	depth_label = Label.new()
 	depth_label.text = "Depth: 0m"
-	depth_label.position = Vector2(20, 50)  # Position below score label
-	ui_layer.add_child(depth_label)  # Add to UI layer instead of root
+	depth_label.position = Vector2(label_position_x, depth_position_y)
+	depth_label.add_theme_color_override("font_color", Color(0, 0, 0))  # Black text
 	
 	# Create an FPS counter label
 	fps_label = Label.new()
 	fps_label.text = "FPS: 0"
-	fps_label.position = Vector2(20, 80)  # Position below depth label
-	fps_label.modulate = Color(1, 1, 0)  # Yellow color for visibility
-	ui_layer.add_child(fps_label)
+	fps_label.position = Vector2(label_position_x, fps_position_y)
+	fps_label.add_theme_color_override("font_color", Color(0, 0, 0))  # Black text
+	
+	# If we have the texture rect, add labels to it
+	if ui_texture_rect:
+		ui_texture_rect.add_child(score_label)
+		ui_texture_rect.add_child(depth_label)
+		ui_texture_rect.add_child(fps_label)
+	else:
+		# Otherwise add directly to UI layer
+		ui_layer.add_child(score_label)
+		ui_layer.add_child(depth_label)
+		ui_layer.add_child(fps_label)
 
 # Update the depth display
 func update_depth_display():
@@ -290,7 +333,7 @@ func _on_target_completed(fish_type):
 	
 	# Update score
 	if score_label:
-		score_label.text = "Fish photographed: " + str(captured_count) + "/" + str(total_targets)
+		score_label.text = "Species Found: " + str(captured_count) + "/" + str(total_targets)
 	
 	# Check if all targets completed
 	if captured_count >= total_targets:
