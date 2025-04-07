@@ -53,6 +53,10 @@ var god_rays = null
 var new_fish_announcement = null
 var captured_species = []  # Track which species have been captured
 
+# Add at the top with other variable declarations
+var pause_menu = null
+var is_paused = false
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	# Create and show the start menu first
@@ -94,6 +98,9 @@ func _ready():
 
 	# Initialize new fish announcement
 	initialize_fish_announcement()
+
+	# Initialize pause menu
+	initialize_pause_menu()
 
 # Setup the depth shader overlay
 func setup_depth_shader():
@@ -352,33 +359,39 @@ func _on_flashlight_toggled(is_on):
 
 # Handle input events
 func _input(event):
-	# Play camera sound and take photo when mouse is clicked
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		take_photo()
+	# Handle Escape key for pause menu
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		toggle_pause()
 	
-	# Flashlight controls
-	if event is InputEventKey and event.pressed:
-		# Increase/decrease light radius
-		if event.keycode == KEY_UP:
-			flashlight.adjust_radius(0.02)
-		elif event.keycode == KEY_DOWN:
-			flashlight.adjust_radius(-0.02)
+	# Only process these inputs if the game is not paused
+	if not is_paused:
+		# Play camera sound and take photo when mouse is clicked
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			take_photo()
+		
+		# Flashlight controls
+		if event is InputEventKey and event.pressed:
+			# Increase/decrease light radius
+			if event.keycode == KEY_UP:
+				flashlight.adjust_radius(0.02)
+			elif event.keycode == KEY_DOWN:
+				flashlight.adjust_radius(-0.02)
 			
-		# Increase/decrease light intensity
-		if event.keycode == KEY_RIGHT:
-			flashlight.adjust_intensity(0.1)
-		elif event.keycode == KEY_LEFT:
-			flashlight.adjust_intensity(-0.1)
+			# Increase/decrease light intensity
+			if event.keycode == KEY_RIGHT:
+				flashlight.adjust_intensity(0.1)
+			elif event.keycode == KEY_LEFT:
+				flashlight.adjust_intensity(-0.1)
 
-		# Adjust light falloff (edge softness)
-		if event.keycode == KEY_BRACKETRIGHT:
-			flashlight.adjust_falloff(0.1)
-		elif event.keycode == KEY_BRACKETLEFT:
-			flashlight.adjust_falloff(-0.1)
+			# Adjust light falloff (edge softness)
+			if event.keycode == KEY_BRACKETRIGHT:
+				flashlight.adjust_falloff(0.1)
+			elif event.keycode == KEY_BRACKETLEFT:
+				flashlight.adjust_falloff(-0.1)
 
-	# Toggle flashlight on/off
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F:
-		flashlight.toggle()
+		# Toggle flashlight on/off
+		if event is InputEventKey and event.pressed and event.keycode == KEY_F:
+			flashlight.toggle()
 
 # Take a photo with the camera
 func take_photo():
@@ -478,8 +491,8 @@ func create_flash_effect():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	# Skip updates if game is not active
-	if not game_active:
+	# Skip updates if game is not active or paused
+	if not game_active or is_paused:
 		return
 		
 	# Update camera target position to follow mouse
@@ -682,3 +695,45 @@ func create_looping_audio(stream_path, volume_db = 0.0, bus = "Master", autoplay
 		audio_player.play()
 	
 	return audio_player
+
+# Create this function to initialize the pause menu
+func initialize_pause_menu():
+	# Either load the tscn file if you created one
+	var pause_menu_scene = load("res://scenes/pause_menu.tscn")
+	pause_menu = pause_menu_scene.instantiate()
+	
+	# Or create it programmatically if you prefer
+	# (Uncomment this if you didn't create a scene file)
+	# pause_menu = create_pause_menu_programmatically()
+	
+	add_child(pause_menu)
+	
+	# Connect signals
+	pause_menu.resume_game.connect(_on_resume_game)
+	pause_menu.quit_game.connect(_on_quit_game)
+	
+	# Hide initially
+	pause_menu.visible = false
+
+# Add these handlers for the pause menu signals
+func _on_resume_game():
+	is_paused = false
+	game_active = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+
+func _on_quit_game():
+	get_tree().quit()
+
+# Add a function to toggle pause state
+func toggle_pause():
+	is_paused = !is_paused
+	
+	if is_paused:
+		# Pause game
+		game_active = false
+		pause_menu.show_menu()
+	else:
+		# Resume game
+		game_active = true
+		pause_menu.hide_menu()
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
